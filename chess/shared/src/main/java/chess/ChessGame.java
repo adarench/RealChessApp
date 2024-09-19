@@ -91,8 +91,24 @@ public class ChessGame {
      * @param teamColor which team to check for check
      * @return True if the specified team is in check
      */
+    //iterate through pieces to see if cking is in check
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        for (int row = 0; row < 8; row++){
+            for int col = 0; col < 8; col++){
+            ChessPosition position = new ChessPosition(row, col);
+            ChessPiece piece = board.getPiece(position);
+
+            //check piece for check ability
+            if (piece != null && piece.getTeamColor() != teamColor){
+                Collection<ChessMove> opponentMoves = piece.pieceMoves(board, position);
+                for (ChessMove move : opponentMoves){
+                    if(move.getEndPosition().equals(kingPosition)){
+                        return true; //king in check
+                    }
+                }
+              }
+            }
+        }
     }
 
     /**
