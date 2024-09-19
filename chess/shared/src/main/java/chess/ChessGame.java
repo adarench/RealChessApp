@@ -118,7 +118,46 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)){
+            return false; //If not in check, it's not checkmate
+        }
+
+        //search for a valid move to resolve check
+        for (int row = 0; row < 8; row++){
+            for(int col = 0; col < 8; col++){
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+
+                if(piece != null && piece.getTeamColor() == teamColor){
+                    Collection<ChessMove> validMoves = piece.pieceMoves(board, position);
+                    for (ChessMove move : validMoves){
+                        ChessBoard tempBoard = board.deepCopyBoard();
+                        tempBoard.addPiece(move.getEndPosition(), piece);
+                        tempBoard.addPiece(move.getStartPosition(), null);
+                        if (!isInCheck(teamColor)){
+                            return false;
+                        }
+
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    //helper method to find king position
+
+    private ChessPosition findKingPosition(TeamColor teamColor){
+        for (int row = 0; row < 8; row++){
+            for (int col = 0; col < 0; col++){
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+
+                if(piece != null && piece.getPieceType() == ChessPiece.PieceType.KING && piece.getTeamColor() == teamColor){
+                    return position; //found king
+                }
+            }
+        }
     }
 
     /**
@@ -138,7 +177,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board = board;
     }
 
     /**
