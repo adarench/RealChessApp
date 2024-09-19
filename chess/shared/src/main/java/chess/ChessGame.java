@@ -12,7 +12,7 @@ public class ChessGame {
     private ChessBoard board;
     private TeamColor currentTurn;
     public ChessGame() {
-        this.board = new ChessBoard;
+        this.board = new ChessBoard();
         this.currentTurn = TeamColor.WHITE;
         this.board.resetBoard();
     }
@@ -67,12 +67,12 @@ public class ChessGame {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         //check if piece exists or belongs to current team
         if (piece == null || piece.getTeamColor() != currentTurn){
-            throw new InvalidMoveException("no valid piece at this position or wrong team's turn")
+            throw new InvalidMoveException("no valid piece at this position or wrong team's turn");
         }
         //is move valid
         Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
         if (!validMoves.contains(move)) {
-            throw new InvalidMoveException("move not valid for this piece")
+            throw new InvalidMoveException("move not valid for this piece");
         }
         //make move
         board.addPiece(move.getEndPOsition(), piece);
@@ -93,6 +93,7 @@ public class ChessGame {
      */
     //iterate through pieces to see if cking is in check
     public boolean isInCheck(TeamColor teamColor) {
+        ChessPosition kingPosition = findKingPosition((teamColor));
         for (int row = 0; row < 8; row++){
             for int col = 0; col < 8; col++){
             ChessPosition position = new ChessPosition(row, col);
@@ -109,6 +110,7 @@ public class ChessGame {
               }
             }
         }
+        return false; //king not in check
     }
 
     /**
@@ -158,6 +160,7 @@ public class ChessGame {
                 }
             }
         }
+        return null;
     }
 
     /**
@@ -168,7 +171,24 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (isInCheck(teamColor)){
+            return false;
+        }
+
+        for(int row  = 0; row < 8; row++){
+            for (int col = 0; col < 8; col++){
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+
+                if (piece != null && piece.getTeamColor() == teamColor){
+                    Collection<ChessMove> validMoves = piece.pieceMoves(board, position);
+                    if(!validMoves.isEmpty()){
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;  //no valid moves it's a stalemate
     }
 
     /**

@@ -10,12 +10,16 @@ import java.util.ArrayList;
  * signature of the existing methods.
  */
 public class ChessPiece {
-
+    private ChessGame.TeamColor teamColor;
+    private PieceType pieceType;
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
-        private ChessGame.TeamColor teamColor;
-        private PieceType pieceType;
+        this.pieceType = pieceType;
+        this.teamColor = teamColor;
     }
 
+    public ChessPiece deepCopy(){
+        return new ChessPiece(this.pieceType, this.teamColor);
+    }
     /**
      * The various different chess piece options
      */

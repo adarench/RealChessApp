@@ -14,6 +14,24 @@ public class ChessBoard {
         board = new ChessPiece[8][8];
     }
 
+    public ChessBoard deepCopyBoard(){
+        ChessBoard newBoard = new ChessBoard();
+
+        //loop through positions on the board
+
+        for (int row = 0; row < 8; row++){
+            for (int col = 0; col < 8; col++){
+                ChessPiece piece = board[row][col];
+
+                if(piece!=null){
+                    newBoard.board[row][col] = piece.deepCopy();
+                }
+            }
+        }
+        return newBoard;
+    }
+
+
     /**
      * Adds a chess piece to the chessboard
      *
