@@ -2,6 +2,7 @@ package chess;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Represents a single chess piece
@@ -18,7 +19,7 @@ public class ChessPiece {
     }
 
     public ChessPiece deepCopy(){
-        return new ChessPiece(this.pieceType, this.teamColor);
+        return new ChessPiece(this.teamColor, this.pieceType);
     }
     /**
      * The various different chess piece options
@@ -54,30 +55,31 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
+        Collection<ChessMove> validMoves = new ArrayList<>();
         switch(pieceType) {
             case QUEEN:
-                addRookMoves(board, position, validMoves);
-                addBishopMoves(board, position, validMoves);
+                addRookMoves(board, myPosition, validMoves);
+                addBishopMoves(board, myPosition, validMoves);
                 break;
 
             case ROOK:
-                addRookMoves(board, position, validMoves);
+                addRookMoves(board, myPosition, validMoves);
                 break;
 
             case BISHOP:
-                addBishopMoves(board, position, validMoves);
+                addBishopMoves(board, myPosition, validMoves);
                 break;
 
             case KNIGHT:
-                addKnightMoves(board, position, validMoves);
+                addKnightMoves(board, myPosition, validMoves);
                 break;
 
             case KING:
-                addKingMoves(board, position, validMoves);
+                addKingMoves(board, myPosition, validMoves);
                 break;
 
             case PAWN:
-                addPawnMoves(board, position, validMoves);
+                addPawnMoves(board, myPosition, validMoves);
                 break;
         }
 
@@ -91,7 +93,7 @@ public class ChessPiece {
         addLineMoves(board, position, validMoves, 0, -1);
     }
 
-    private void addBishopMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMove){
+    private void addBishopMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves){
         addLineMoves(board, position, validMoves, 1, 1);
         addLineMoves(board, position, validMoves, 1, -1);
         addLineMoves(board, position, validMoves, -1, 1);

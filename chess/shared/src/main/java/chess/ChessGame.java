@@ -75,7 +75,7 @@ public class ChessGame {
             throw new InvalidMoveException("move not valid for this piece");
         }
         //make move
-        board.addPiece(move.getEndPOsition(), piece);
+        board.addPiece(move.getEndPosition(), piece);
         board.addPiece(move.getStartPosition(), null); //clear start pos
 
         if(isInCheck(currentTurn)){
@@ -95,7 +95,7 @@ public class ChessGame {
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition((teamColor));
         for (int row = 0; row < 8; row++){
-            for int col = 0; col < 8; col++){
+            for (int col = 0; col < 8; col++){
             ChessPosition position = new ChessPosition(row, col);
             ChessPiece piece = board.getPiece(position);
 
