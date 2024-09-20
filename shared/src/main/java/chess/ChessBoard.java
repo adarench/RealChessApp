@@ -39,7 +39,7 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        board[position.getRow()][position.getColumn()]=piece;
+        board[position.getRow()-1][position.getColumn()-1]=piece;
     }
 
     /**
@@ -50,7 +50,7 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return board[position.getRow()][position.getColumn()];
+        return board[position.getRow()-1][position.getColumn()-1];
     }
 
     /**
@@ -87,7 +87,7 @@ public class ChessBoard {
         }
 
         private void placeBlackPieces () {
-            for (int i=0; i < 0; i++) {
+            for (int i=0; i < 8; i++) {
                 board[6][i]=new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
             }
             board[7][0]=new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK);

@@ -14,8 +14,8 @@ public class ChessPiece {
     private ChessGame.TeamColor teamColor;
     private PieceType pieceType;
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
-        this.pieceType = pieceType;
-        this.teamColor = teamColor;
+        this.pieceType = type;
+        this.teamColor = pieceColor;
     }
 
     public ChessPiece deepCopy(){
@@ -49,7 +49,7 @@ public class ChessPiece {
 
     /**
      * Calculates all the positions a chess piece can move to
-     * Does not take into account moves that are illegal due to leaving the king in
+     * not take into account moves that are illegal due to leaving the king in
      * danger
      *
      * @return Collection of valid moves
@@ -86,19 +86,34 @@ public class ChessPiece {
         return validMoves;
     }
     //Helper methods
-    private void addRookMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves){
+    private void addRookMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
+        // Move up (row decrement)
+        addLineMoves(board, position, validMoves, -1, 0);
+        // Move down (row increment)
         addLineMoves(board, position, validMoves, 1, 0);
-        addLineMoves(board, position, validMoves, 1, 0);
-        addLineMoves(board, position, validMoves, 1, 0);
+        // Move left (column decrement)
         addLineMoves(board, position, validMoves, 0, -1);
+        // Move right (column increment)
+        addLineMoves(board, position, validMoves, 0, 1);
     }
 
-    private void addBishopMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves){
-        addLineMoves(board, position, validMoves, 1, 1);
-        addLineMoves(board, position, validMoves, 1, -1);
+
+    private void addBishopMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
+
+        // Top-right diagonal
         addLineMoves(board, position, validMoves, -1, 1);
+
+        // Bottom-right diagonal
+        addLineMoves(board, position, validMoves, 1, 1);
+
+        // Bottom-left diagonal
+        addLineMoves(board, position, validMoves, 1, -1);
+
+        // Top-left diagonal
         addLineMoves(board, position, validMoves, -1, -1);
     }
+
+
     private void addKingMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
         int[] rowOffsets = {1, 1, 1, 0, 0, -1, -1, -1};
         int[] colOffsets = {1, 0, -1, 1, -1, 1, 0, -1};
@@ -173,6 +188,6 @@ public class ChessPiece {
         }
     }
     private boolean isValidPosition(ChessPosition position) {
-        return position.getRow() >= 0 && position.getRow() < 8 && position.getColumn() >= 0 && position.getColumn() < 8;
+        return position.getRow() >= 1 && position.getRow() <= 8 && position.getColumn() >= 1 && position.getColumn() <= 8;
     }
 }
