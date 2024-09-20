@@ -102,4 +102,103 @@ public class ChessBoard {
             board[7][3]=new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.QUEEN);
             board[7][4]=new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING);
         }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPiece piece = board[i][j];
+                sb.append("|");
+                if (piece == null) {
+                    sb.append(" ");
+                } else {
+                    if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+                        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                            sb.append('p');
+                        } else {
+                            sb.append('P');
+                        }
+                    } else if (piece.getPieceType() == ChessPiece.PieceType.ROOK) {
+                        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                            sb.append('r');
+                        } else {
+                            sb.append('R');
+                        }
+                    } else if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                            sb.append('k');
+                        } else {
+                            sb.append('K');
+                        }
+                    } else if (piece.getPieceType() == ChessPiece.PieceType.QUEEN) {
+                        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                            sb.append('q');
+                        } else {
+                            sb.append('Q');
+                        }
+                    } else if (piece.getPieceType() == ChessPiece.PieceType.KNIGHT) {
+                        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                            sb.append('n');
+                        } else {
+                            sb.append('N');
+                        }
+                    } else if (piece.getPieceType() == ChessPiece.PieceType.BISHOP) {
+                        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                            sb.append('b');
+                        } else {
+                            sb.append('B');
+                        }
+                    }
+                }
+            }
+            sb.append("|\n");
+        }
+        return sb.toString();
+
+
+    }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ChessBoard that = (ChessBoard) o;
+
+        // Compare each position on the board
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                ChessPiece thisPiece = this.board[row][col];
+                ChessPiece thatPiece = that.board[row][col];
+
+                if (thisPiece == null && thatPiece == null) {
+                    continue; // Both are empty, so move on
+                }
+
+                if (thisPiece == null || thatPiece == null) {
+                    return false; // One is empty but the other is not
+                }
+
+                // Compare both pieces' type and team color
+                if (!thisPiece.equals(thatPiece)) {
+                    return false; // The pieces are different
+                }
+            }
+        }
+
+        return true;
+    }
+    @Override
+    public int hashCode() {
+        int result = 1;
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                ChessPiece piece = board[row][col];
+                result = 31 * result + (piece != null ? piece.hashCode() : 0);
+            }
+        }
+        return result;
+    }
+
+
 }

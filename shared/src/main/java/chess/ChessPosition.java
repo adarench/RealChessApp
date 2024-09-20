@@ -25,12 +25,8 @@ public class ChessPosition {
     public int getColumn(){
         return column;
     }
-    public void setRow(){
-        this.row = row;
-    }
-    public void setColumn(){
-        this.column = column;
-    }
+    //public void setRow(int row){this.row = row;}
+    //public void setColumn(int column){this.column = column;}
     /**
      * @return which column this position is in
      * 1 codes for the left row
