@@ -118,10 +118,19 @@ public class ChessPiece {
         int[] rowOffsets = {1, 1, 1, 0, 0, -1, -1, -1};
         int[] colOffsets = {1, 0, -1, 1, -1, 1, 0, -1};
 
+        //regular moves
         for (int i = 0; i < 8; i++) {
             ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i], position.getColumn() + colOffsets[i]);
             if (isValidPosition(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
                 validMoves.add(new ChessMove(position, newPosition, null));
+            }
+        }
+        //castling logic...will only add if the king hasn't moved yet
+        if (!hasKingMoved() && !isInCheck(teamColor)){
+            //check right side of board
+            if(canCastle(board, position,true)){
+                ChessPosition newCastlePosition = new ChessPosition(position.getRow(), position.getColumn() + 2);
+                validMoves.add(new ChessMove(position, newCastlePosition, null));
             }
         }
     }
