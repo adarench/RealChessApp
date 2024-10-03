@@ -9,6 +9,7 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
+    private ChessPosition lastDoubleMovePawn = null;
     private boolean whiteKingMoved = false;
     private boolean blackKingMoved = false;
     private boolean whiteKingsideRookMoved = false;
@@ -118,9 +119,38 @@ public class ChessGame {
     /**
      * Makes a move in a chess game
      *
-     * @param move chess move to preform
+     *
      * @throws InvalidMoveException if move is invalid
      */
+
+    public boolean canCastle(ChessPosition kingPosition, boolean isKingside) {
+        int row = kingPosition.getRow();
+        int rookCol = isKingside ? 8 : 1;
+        int stepDirection = isKingside ? 1 : -1;
+
+        // Check if the king or rook has already moved
+        if (hasKingMoved(currentTurn) || hasRookMoved(currentTurn, isKingside)) {
+            return false;
+        }
+
+        // Ensure there are no pieces between the king and the rook
+        for (int col = kingPosition.getColumn() + stepDirection; col != rookCol; col += stepDirection) {
+            if (board.getPiece(new ChessPosition(row, col)) != null) {
+                return false;
+            }
+        }
+
+        // Ensure the king does not pass through or end up in check
+        for (int col = kingPosition.getColumn(); col != kingPosition.getColumn() + 2 * stepDirection; col += stepDirection) {
+            ChessPosition pos = new ChessPosition(row, col);
+            if (isSquareUnderAttack(board, pos, currentTurn)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public void makeMove(ChessMove move) throws InvalidMoveException {
         //get start position
         ChessPiece piece = board.getPiece(move.getStartPosition());
@@ -132,6 +162,29 @@ public class ChessGame {
         Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
         if (!validMoves.contains(move)) {
             throw new InvalidMoveException("move not valid for this piece");
+        }
+
+        // castling logic for the king
+        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+            int startCol = move.getStartPosition().getColumn();
+            int endCol = move.getEndPosition().getColumn();
+
+            // check if the move is a castling move (king moves two spaces)
+            if (Math.abs(endCol - startCol) == 2) {
+                boolean isKingside = endCol > startCol;
+
+                // validate if castling is allowed using canCastle
+                if (!canCastle(move.getStartPosition(), isKingside)) {
+                    throw new InvalidMoveException("Castling not allowed");
+                }
+
+                // Move the rook for castling
+                ChessPosition rookStart = new ChessPosition(move.getStartPosition().getRow(), isKingside ? 8 : 1);
+                ChessPosition rookEnd = new ChessPosition(move.getStartPosition().getRow(), isKingside ? 6 : 4);
+                ChessPiece rook = board.getPiece(rookStart);
+                board.addPiece(rookEnd, rook);
+                board.addPiece(rookStart, null);
+            }
         }
         //clone the board and simulate the move
         ChessBoard tempBoard = board.deepCopyBoard();
@@ -172,6 +225,8 @@ public class ChessGame {
             board.addPiece(move.getEndPosition(), piece);
             board.addPiece(move.getStartPosition(), null); // Clear start position
         }
+        //update move flags for castling
+        updateMoveFlags(piece, move.getStartPosition());
         //switch turns
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
@@ -182,7 +237,7 @@ public class ChessGame {
      * @param teamColor which team to check for check
      * @return True if the specified team is in check
      */
-    //iterate through pieces to see if cking is in check
+    //iterate through pieces to see if king is in check
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition((teamColor));
         for (int row = 0; row < 8; row++){

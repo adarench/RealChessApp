@@ -128,46 +128,19 @@ public class ChessPiece {
         //castling logic...will only add if the king hasn't moved yet
         if (!game.hasKingMoved(teamColor) && !game.isInCheck(teamColor)){
             //check right side of board
-            if(canCastle(board, position,true, game)){
+            if(game.canCastle(position,true)){
                 ChessPosition newCastlePosition = new ChessPosition(position.getRow(), position.getColumn() + 2);
                 validMoves.add(new ChessMove(position, newCastlePosition, null));
             }
             //queenside castling
-            if(canCastle(board, position, false, game)){
+            if(game.canCastle(position, false)){
                 ChessPosition newCastlePosition = new ChessPosition(position.getRow(), position.getColumn() -2);
                 validMoves.add(new ChessMove(position, newCastlePosition, null));
             }
         }
     }
 
-    private boolean canCastle(ChessBoard board, ChessPosition kingPosition, boolean isKingside, ChessGame game) {
-        int row = kingPosition.getRow();
-        int rookCol = isKingside ? 8 : 1;
-        int stepDirection = isKingside ? 1 : -1;
 
-        // Check if the rook exists and hasn't moved
-        ChessPiece rook = board.getPiece(new ChessPosition(row, rookCol));
-        if (rook == null || rook.getPieceType() != ChessPiece.PieceType.ROOK || game.hasRookMoved(teamColor, isKingside)) {
-            return false;
-        }
-
-        // Ensure there are no pieces between the king and the rook
-        for (int col = kingPosition.getColumn() + stepDirection; col != rookCol; col += stepDirection) {
-            if (board.getPiece(new ChessPosition(row, col)) != null) {
-                return false;
-            }
-        }
-
-        // Ensure the king does not pass through or end up in check
-        for (int col = kingPosition.getColumn(); col != rookCol; col += stepDirection) {
-            ChessPosition pos = new ChessPosition(row, col);
-            if (game.isSquareUnderAttack(board, pos, teamColor)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     private void addKnightMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
         int[] rowOffsets = {2, 2, -2, -2, 1, 1, -1, -1};
