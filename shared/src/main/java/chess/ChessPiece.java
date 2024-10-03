@@ -54,7 +54,7 @@ public class ChessPiece {
      *
      * @return Collection of valid moves
      */
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
+    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame game) {
         Collection<ChessMove> validMoves = new ArrayList<>();
         switch(pieceType) {
             case QUEEN:
@@ -75,7 +75,7 @@ public class ChessPiece {
                 break;
 
             case KING:
-                addKingMoves(board, myPosition, validMoves);
+                addKingMoves(board, myPosition, validMoves, game);
                 break;
 
             case PAWN:
@@ -114,7 +114,7 @@ public class ChessPiece {
     }
 
 
-    private void addKingMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
+    private void addKingMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves, ChessGame game) {
         int[] rowOffsets = {1, 1, 1, 0, 0, -1, -1, -1};
         int[] colOffsets = {1, 0, -1, 1, -1, 1, 0, -1};
 
@@ -126,13 +126,47 @@ public class ChessPiece {
             }
         }
         //castling logic...will only add if the king hasn't moved yet
-        if (!hasKingMoved() && !isInCheck(teamColor)){
+        if (!game.hasKingMoved(teamColor) && !game.isInCheck(teamColor)){
             //check right side of board
-            if(canCastle(board, position,true)){
+            if(canCastle(board, position,true, game)){
                 ChessPosition newCastlePosition = new ChessPosition(position.getRow(), position.getColumn() + 2);
                 validMoves.add(new ChessMove(position, newCastlePosition, null));
             }
+            //queenside castling
+            if(canCastle(board, position, false, game)){
+                ChessPosition newCastlePosition = new ChessPosition(position.getRow(), position.getColumn() -2);
+                validMoves.add(new ChessMove(position, newCastlePosition, null));
+            }
         }
+    }
+
+    private boolean canCastle(ChessBoard board, ChessPosition kingPosition, boolean isKingside, ChessGame game) {
+        int row = kingPosition.getRow();
+        int rookCol = isKingside ? 8 : 1;
+        int stepDirection = isKingside ? 1 : -1;
+
+        // Check if the rook exists and hasn't moved
+        ChessPiece rook = board.getPiece(new ChessPosition(row, rookCol));
+        if (rook == null || rook.getPieceType() != ChessPiece.PieceType.ROOK || game.hasRookMoved(teamColor, isKingside)) {
+            return false;
+        }
+
+        // Ensure there are no pieces between the king and the rook
+        for (int col = kingPosition.getColumn() + stepDirection; col != rookCol; col += stepDirection) {
+            if (board.getPiece(new ChessPosition(row, col)) != null) {
+                return false;
+            }
+        }
+
+        // Ensure the king does not pass through or end up in check
+        for (int col = kingPosition.getColumn(); col != rookCol; col += stepDirection) {
+            ChessPosition pos = new ChessPosition(row, col);
+            if (game.isSquareUnderAttack(board, pos, teamColor)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void addKnightMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
