@@ -15,21 +15,21 @@ public class ChessBoard {
     }
 
     public ChessBoard deepCopyBoard() {
-        ChessBoard newBoard=new ChessBoard();
-
-        //loop through positions on the board
-
-        for (int row=0; row < 8; row++) {
-            for (int col=0; col < 8; col++) {
-                ChessPiece piece=board[row][col];
-
+        ChessBoard newBoard = new ChessBoard();
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = this.getPiece(position);
                 if (piece != null) {
-                    newBoard.board[row][col]=piece.deepCopy();
+                    // Create a new instance of ChessPiece
+                    ChessPiece newPiece = new ChessPiece(piece.getTeamColor(), piece.getPieceType());
+                    newBoard.addPiece(position, newPiece);
                 }
             }
         }
         return newBoard;
     }
+
 
 
     /**

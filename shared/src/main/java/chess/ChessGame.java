@@ -62,7 +62,9 @@ public class ChessGame {
 
     private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
     ChessGame.TeamColor opponentColor = (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-
+    if(position == null){
+        return false;
+    }
     for (int row = 1; row <= 8; row++) {
         for (int col = 1; col <= 8; col++) {
             ChessPosition attackerPosition = new ChessPosition(row, col);
@@ -184,6 +186,7 @@ public class ChessGame {
 
 
 
+
     /**
      * Makes a move in a chess game
      *
@@ -220,62 +223,75 @@ public class ChessGame {
     }*/
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        //get start position
+        // Get the piece at the start position
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        //check if piece exists or belongs to current team
+        // Check if piece exists or belongs to current team
         if (piece == null || piece.getTeamColor() != currentTurn){
-            throw new InvalidMoveException("no valid piece at this position or wrong team's turn");
+            throw new InvalidMoveException("No valid piece at this position or wrong team's turn");
         }
-        //is move valid
+        // Get valid moves
         Collection<ChessMove> validMoves = validMoves(move.getStartPosition());
-        if (!validMoves.contains(move)) {
-            throw new InvalidMoveException("move not valid for this piece");
+
+        // Modify the move validation here
+        boolean moveFound = false;
+        for (ChessMove validMove : validMoves) {
+            if (validMove.getStartPosition().equals(move.getStartPosition()) &&
+                    validMove.getEndPosition().equals(move.getEndPosition())) {
+                moveFound = true;
+                break;
+            }
+        }
+        if (!moveFound) {
+            throw new InvalidMoveException("Move not valid for this piece");
         }
 
-        //clone the board and simulate the move
+        // Proceed with move validation and execution
+        // Clone the board and simulate the move
         ChessBoard tempBoard = board.deepCopyBoard();
         tempBoard.addPiece(move.getEndPosition(), piece);
-        tempBoard.addPiece(move.getStartPosition(), null); //clear start pos
-        //check if the move leaves king in check
+        tempBoard.addPiece(move.getStartPosition(), null); // Clear start position
+
+        // Check if the move leaves king in check
         if(isInCheck(currentTurn)){
-            throw new InvalidMoveException("move leaves the king in check");
+            throw new InvalidMoveException("Move leaves the king in check");
         }
-        //move is validated, check for pawn promotion case
+
+        // Move is validated, check for pawn promotion case
         if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-            // check if the pawn has reached the last row
+            // Check if the pawn has reached the last row
             if ((piece.getTeamColor() == TeamColor.WHITE && move.getEndPosition().getRow() == 8) ||
                     (piece.getTeamColor() == TeamColor.BLACK && move.getEndPosition().getRow() == 1)) {
 
-                // if promotion exists promote the pawn
+                // Get the promotion type
                 ChessPiece.PieceType promotionType = move.getPromotionPiece();
                 if (promotionType != null) {
-                    // create the promoted piece
+                    // Create the promoted piece
                     ChessPiece promotedPiece = new ChessPiece(piece.getTeamColor(), promotionType);
 
-                    // place the promoted piece at the end position
+                    // Place the promoted piece at the end position
                     board.addPiece(move.getEndPosition(), promotedPiece);
                     board.addPiece(move.getStartPosition(), null); // Clear start position
                 } else {
-                    // if no promotion type was specified, throw an error or promote automatically to Queen
+                    // If no promotion type was specified, promote automatically to Queen
                     ChessPiece promotedPiece = new ChessPiece(piece.getTeamColor(), ChessPiece.PieceType.QUEEN);
                     board.addPiece(move.getEndPosition(), promotedPiece);
                     board.addPiece(move.getStartPosition(), null);
                 }
             } else {
-                // if the pawn hasn't reached the last row, perform a regular pawn move
+                // If the pawn hasn't reached the last row, perform a regular pawn move
                 board.addPiece(move.getEndPosition(), piece);
                 board.addPiece(move.getStartPosition(), null); // Clear start position
             }
         } else {
-            // for other piece types, perform a regular move
+            // For other piece types, perform a regular move
             board.addPiece(move.getEndPosition(), piece);
             board.addPiece(move.getStartPosition(), null); // Clear start position
         }
-        /*//update move flags for castling
-        updateMoveFlags(piece, move.getStartPosition());*/
-        //switch turns
+
+        // Switch turns
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
+
 
     /**
      * Determines if the given team is in check
