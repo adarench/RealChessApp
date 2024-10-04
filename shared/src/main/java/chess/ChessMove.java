@@ -42,6 +42,15 @@ public class ChessMove {
         return promotionPiece;
     }
 
+    @Override
+    public String toString() {
+        return "ChessMove{" +
+                "startPos=" + startPosition +
+                ", endPos=" + endPosition +
+                ", promoPiece=" + promotionPiece +
+                '}';
+    }
+
     //equals method to compare moves
     @Override
     public boolean equals(Object o) {

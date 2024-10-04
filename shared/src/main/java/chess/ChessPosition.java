@@ -40,6 +40,14 @@ public class ChessPosition {
     return row == that.row && column == that.column;
     }
 
+    @Override
+    public String toString() {
+        return "ChessPosition{" +
+                "row=" + row +
+                ", column=" + column +
+                '}';
+    }
+
     //hash cases
     @Override
     public int hashCode(){

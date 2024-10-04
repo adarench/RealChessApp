@@ -129,7 +129,7 @@ public class ChessPiece {
                 validMoves.add(new ChessMove(position, newPosition, null));
             }
         }
-        //castling logic...will only add if the king hasn't moved yet
+        /*//castling logic...will only add if the king hasn't moved yet
         if (!game.hasKingMoved(teamColor) && !game.isInCheck(teamColor)){
             //check right side of board
             if(game.canCastle(position,true)){
@@ -141,7 +141,7 @@ public class ChessPiece {
                 ChessPosition newCastlePosition = new ChessPosition(position.getRow(), position.getColumn() -2);
                 validMoves.add(new ChessMove(position, newCastlePosition, null));
             }
-        }
+        }*/
     }
 
 
