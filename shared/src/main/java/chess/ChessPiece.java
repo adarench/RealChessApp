@@ -54,6 +54,10 @@ public class ChessPiece {
      *
      * @return Collection of valid moves
      */
+
+    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
+        return pieceMoves(board, myPosition, null);
+    }
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessGame game) {
         Collection<ChessMove> validMoves = new ArrayList<>();
         switch(pieceType) {
