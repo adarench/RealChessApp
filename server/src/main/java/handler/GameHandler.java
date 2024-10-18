@@ -54,4 +54,48 @@ public class GameHandler{
     }
   };
 
+  //join game case PUT
+  public Route joinGame = (Request req, Response res) -> {
+    try {
+      // Extract the auth token from the headers
+      String authToken = req.headers("Authorization");
+
+      // Parse request body to get gameID and playerColor
+      JoinGameRequest joinGameRequest = gson.fromJson(req.body(), JoinGameRequest.class);
+
+      // Join the game
+      gameService.joinGame(authToken, joinGameRequest.gameID, joinGameRequest.playerColor);
+
+      // Return success response
+      res.status(200);
+      return gson.toJson(new SuccessResponse(true));
+    } catch (DataAccessException e) {
+      res.status(400); // Bad request
+      return gson.toJson(new ErrorResponse(e.getMessage()));
+    }
+  };
+
+  //helper classes
+  private static class CreateGameRequest {
+    String gameName;
+  }
+
+  private static class JoinGameRequest {
+    int gameID;
+    String playerColor;
+  }
+
+  private static class ErrorResponse {
+    String message;
+    ErrorResponse(String message) {
+      this.message = message;
+    }
+  }
+
+  private static class SuccessResponse {
+    boolean success;
+    SuccessResponse(boolean success) {
+      this.success = success;
+    }
+
 }
