@@ -20,13 +20,13 @@ public class UserHandler{
   //user registration
   public Route register = (Request req, Response res) -> {
     try {
-      // Parse request body into UserData
+      // parse request body into UserData
       UserData userData = gson.fromJson(req.body(), UserData.class);
 
-      // Register the user using the UserService
+      // register the user using the UserService
       AuthData authData = userService.register(userData);
 
-      // Return success response with the auth token
+      // return success response with the auth token
       res.status(200);
       return gson.toJson(authData);
     } catch (DataAccessException e) {
@@ -35,16 +35,16 @@ public class UserHandler{
     }
   };
 
-  // Handle user login (/session POST)
+  // handle user login (/session POST)
   public Route login = (Request req, Response res) -> {
     try {
-      // Parse request body for login credentials
+      //parse request body for login credentials
       LoginRequest loginRequest = gson.fromJson(req.body(), LoginRequest.class);
 
-      // Log in the user using the UserService
+      //log in the user using the UserService
       AuthData authData = userService.login(loginRequest.username, loginRequest.password);
 
-      // Return success response with the auth token
+      //return success response with the auth token
       res.status(200);
       return gson.toJson(authData);
     } catch (DataAccessException e) {
@@ -53,16 +53,16 @@ public class UserHandler{
     }
   };
 
-  // Handle user logout (/session DELETE)
+  //handle user logout (/session DELETE)
   public Route logout = (Request req, Response res) -> {
     try {
-      // Extract the auth token from the headers
+      //extract the auth token from the headers
       String authToken = req.headers("Authorization");
 
-      // Log out the user using the UserService
+      //log out the user using the UserService
       userService.logout(authToken);
 
-      // Return success response
+      //return success response
       res.status(200);
       return gson.toJson(new SuccessResponse(true));
     } catch (DataAccessException e) {
@@ -70,7 +70,7 @@ public class UserHandler{
       return gson.toJson(new ErrorResponse(e.getMessage()));
     }
   };
-  // Inner classes for LoginRequest and responses
+  //classes for LoginRequest and responses
   private static class LoginRequest {
     String username;
     String password;
