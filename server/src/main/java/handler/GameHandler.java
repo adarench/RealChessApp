@@ -36,4 +36,22 @@ public class GameHandler{
     }
   };
 
+  //list all games GET
+  public Route listGames = (Request req, Response res) -> {
+    try {
+      //extract the auth token from the headers
+      String authToken = req.headers("Authorization");
+
+      // List all games
+      var games = gameService.listGames(authToken);
+
+      //return success response
+      res.status(200);
+      return gson.toJson(games);
+    } catch (DataAccessException e) {
+      res.status(401);
+      return gson.toJson(new ErrorResponse(e.getMessage()));
+    }
+  };
+
 }
