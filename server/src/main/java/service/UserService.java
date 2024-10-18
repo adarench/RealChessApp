@@ -24,16 +24,13 @@ public class UserService{
       throw new DataAccessException("User already exists");
     }
     userDAO.createUser(user);
-    // Generate an auth token for the user
     String authToken = UUID.randomUUID().toString();
     AuthData authData = new AuthData(authToken, user.username());
     authDAO.createAuth(authData);
 
-    // Return the authentication data
     return authData;
   }
   public AuthData login(String username, String password) throws DataAccessException{
-    // Retrieve the user
     UserData user = userDAO.getUser(username);
 
     // Validate the password
@@ -49,7 +46,7 @@ public class UserService{
     return authData;
   }
 
-  /*public void logout(String authToken) thrwos DataAccessException{
+  /*public void logout(String authToken) throws DataAccessException{
     authDAO.deleteAuth(authToken);
   }*/
 }
