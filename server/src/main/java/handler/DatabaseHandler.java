@@ -28,7 +28,19 @@ public class DatabaseHandler{
     }
   };
 
+private static class ErrorResponse {
+  String message;
+  ErrorResponse(String message){
+    this.message = message;
+  }
+}
 
+private static class SuccessResponse{
+  boolean success;
+  SuccessResponse(boolean success){
+    this.success = success;
+  }
+}
 
 
 
