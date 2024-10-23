@@ -1,3 +1,5 @@
+package server;
+
 import handler.UserHandler;
 import handler.GameHandler;
 import handler.DatabaseHandler;
@@ -9,26 +11,27 @@ import dataAccess.GameDAO;
 import dataAccess.AuthDAO;
 import static spark.Spark.*;
 
-public class Server {
 
-  public static void main(String[] args) {
+
+public class Server {
+  public static int run(int port) {
     // Set the port for the Spark server
-    port(8080); // You can change this port as needed
+    port(port); // You can change this port as needed
 
     // initialize DAOs (data access objects)
-    UserDAO userDAO = new UserDAO();
-    GameDAO gameDAO = new GameDAO();
-    AuthDAO authDAO = new AuthDAO();
+    UserDAO userDAO=new UserDAO();
+    GameDAO gameDAO=new GameDAO();
+    AuthDAO authDAO=new AuthDAO();
 
     // initialize services
-    UserService userService = new UserService(userDAO, authDAO);
-    GameService gameService = new GameService(gameDAO, authDAO);
-    DatabaseService databaseService = new DatabaseService(userDAO, gameDAO, authDAO);
+    UserService userService=new UserService(userDAO, authDAO);
+    GameService gameService=new GameService(gameDAO, authDAO);
+    DatabaseService databaseService=new DatabaseService(userDAO, gameDAO, authDAO);
 
     // initialize handlers and pass the services to them
-    UserHandler userHandler = new UserHandler(userService);
-    GameHandler gameHandler = new GameHandler(gameService);
-    DatabaseHandler databaseHandler = new DatabaseHandler(databaseService);
+    UserHandler userHandler=new UserHandler(userService);
+    GameHandler gameHandler=new GameHandler(gameService);
+    DatabaseHandler databaseHandler=new DatabaseHandler(databaseService);
 
     // routes
     post("/user", userHandler.register);        // register
@@ -45,6 +48,13 @@ public class Server {
 
     // spark will listen on port
     awaitInitialization();
-    System.out.println("Server started on port 8080...");
+    return port();
+  }
+
+
+
+  public void stop() {
+    stop();
+    awaitStop();
   }
 }

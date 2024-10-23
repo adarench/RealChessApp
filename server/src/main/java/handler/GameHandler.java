@@ -9,7 +9,7 @@ import spark.Response;
 import spark.Route;
 
 public class GameHandler{
-  private final GameService gameService;
+  private GameService gameService;
   private final Gson gson = new Gson();
 
   public GameHandler(GameService gameService) {
@@ -94,8 +94,10 @@ public class GameHandler{
 
   private static class SuccessResponse {
     boolean success;
+
     SuccessResponse(boolean success) {
-      this.success = success;
+      this.success=success;
     }
+  }
 
 }

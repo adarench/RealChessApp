@@ -8,7 +8,7 @@ import spark.Response;
 import spark.Route;
 
 public class DatabaseHandler{
-  private final DatabaseService databaseService;
+  private DatabaseService databaseService;
   private Gson gson = new Gson();
 
   public DatabaseHandler(DatabaseService databaseService){
