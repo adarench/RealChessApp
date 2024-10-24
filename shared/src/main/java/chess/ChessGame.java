@@ -10,14 +10,7 @@ import java.util.ArrayList;
  * signature of the existing methods.
  */
 public class ChessGame {
-    private ChessPosition lastDoubleMovePawn = null;
-    private boolean isCheckingCheck = false;
-    private boolean whiteKingMoved = false;
-    private boolean blackKingMoved = false;
-    private boolean whiteKingsideRookMoved = false;
-    private boolean whiteQueensideRookMoved = false;
-    private boolean blackKingsideRookMoved = false;
-    private boolean blackQueensideRookMoved = false;
+
     private ChessBoard board;
     private TeamColor currentTurn;
     public ChessGame() {
@@ -26,39 +19,8 @@ public class ChessGame {
         this.board.resetBoard();
     }
 
-    public boolean hasKingMoved(TeamColor teamColor) {
-        return (teamColor == TeamColor.WHITE) ? whiteKingMoved : blackKingMoved;
-    }
-    public boolean hasRookMoved(TeamColor teamColor, boolean isKingside) {
-        if (teamColor == TeamColor.WHITE) {
-            return isKingside ? whiteKingsideRookMoved : whiteQueensideRookMoved;
-        } else {
-            return isKingside ? blackKingsideRookMoved : blackQueensideRookMoved;
-        }
-    }
-    /*public void updateMoveFlags(ChessPiece piece, ChessPosition startPosition) {
-        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
-            if (piece.getTeamColor() == TeamColor.WHITE) {
-                whiteKingMoved = true;
-            } else {
-                blackKingMoved = true;
-            }
-        } else if (piece.getPieceType() == ChessPiece.PieceType.ROOK) {
-            if (piece.getTeamColor() == TeamColor.WHITE) {
-                if (startPosition.getColumn() == 1) {
-                    whiteQueensideRookMoved = true;
-                } else if (startPosition.getColumn() == 8) {
-                    whiteKingsideRookMoved = true;
-                }
-            } else {
-                if (startPosition.getColumn() == 1) {
-                    blackQueensideRookMoved = true;
-                } else if (startPosition.getColumn() == 8) {
-                    blackKingsideRookMoved = true;
-                }
-            }
-        }
-    }*/
+    //will use in future...deleted castling function
+
 
     private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
     ChessGame.TeamColor opponentColor = (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
@@ -126,13 +88,6 @@ public class ChessGame {
      * @return Set of valid moves for requested piece, or null if no piece at
      * startPosition
      */
-    /*public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null){
-            return null;
-        }
-        return piece.pieceMoves(board, startPosition, this);
-    }*/
 
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
@@ -194,33 +149,7 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
 
-    /*public boolean canCastle(ChessPosition kingPosition, boolean isKingside) {
-        int row = kingPosition.getRow();
-        int rookCol = isKingside ? 8 : 1;
-        int stepDirection = isKingside ? 1 : -1;
 
-        // Check if the king or rook has already moved
-        if (hasKingMoved(currentTurn) || hasRookMoved(currentTurn, isKingside)) {
-            return false;
-        }
-
-        // Ensure there are no pieces between the king and the rook
-        for (int col = kingPosition.getColumn() + stepDirection; col != rookCol; col += stepDirection) {
-            if (board.getPiece(new ChessPosition(row, col)) != null) {
-                return false;
-            }
-        }
-
-        // Ensure the king does not pass through or end up in check
-        for (int col = kingPosition.getColumn(); col != kingPosition.getColumn() + 2 * stepDirection; col += stepDirection) {
-            ChessPosition pos = new ChessPosition(row, col);
-            if (isSquareUnderAttack(board, pos, currentTurn)) {
-                return false;
-            }
-        }
-
-        return true;
-    }*/
 
     public void makeMove(ChessMove move) throws InvalidMoveException {
         // Get the piece at the start position

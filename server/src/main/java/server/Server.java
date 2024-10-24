@@ -6,9 +6,9 @@ import handler.DatabaseHandler;
 import service.UserService;
 import service.GameService;
 import service.DatabaseService;
-import dataAccess.UserDAO;
-import dataAccess.GameDAO;
-import dataAccess.AuthDAO;
+import dataaccess.UserDAO;
+import dataaccess.GameDAO;
+import dataaccess.AuthDAO;
 import spark.Spark;
 
 import static spark.Spark.*;

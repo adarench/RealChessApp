@@ -1,4 +1,4 @@
-package dataAccess;
+package dataaccess;
 
 public class DataAccessException extends Exception {
   public DataAccessException(String message) {

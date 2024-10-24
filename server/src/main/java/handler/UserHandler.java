@@ -3,7 +3,7 @@ package handler;
 import service.UserService;
 import model.UserData;
 import model.AuthData;
-import dataAccess.DataAccessException;
+import dataaccess.DataAccessException;
 import com.google.gson.Gson;
 import spark.Request;
 import spark.Response;
