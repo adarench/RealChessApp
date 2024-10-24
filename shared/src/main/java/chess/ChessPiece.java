@@ -124,8 +124,11 @@ public class ChessPiece {
 
         //regular moves
         for (int i = 0; i < 8; i++) {
-            ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i], position.getColumn() + colOffsets[i]);
-            if (isValidPosition(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
+            ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i],
+                    position.getColumn() + colOffsets[i]);
+            if (isValidPosition(newPosition)
+                    && (board.getPiece(newPosition) ==
+                    null || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
                 validMoves.add(new ChessMove(position, newPosition, null));
             }
         }
@@ -139,8 +142,11 @@ public class ChessPiece {
         int[] colOffsets = {1, -1, 1, -1, 2, -2, 2, -2};
 
         for (int i = 0; i < 8; i++) {
-            ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i], position.getColumn() + colOffsets[i]);
-            if (isValidPosition(newPosition) && (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
+            ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i],
+                    position.getColumn() + colOffsets[i]);
+            if (isValidPosition(newPosition) &&
+                    (board.getPiece(newPosition) == null
+                            || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
                 validMoves.add(new ChessMove(position, newPosition, null));
             }
         }
@@ -241,8 +247,10 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o){
+            return true;}
+        if (o == null || getClass() != o.getClass()){
+            return false;}
 
         ChessPiece that = (ChessPiece) o;
 

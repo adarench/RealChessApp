@@ -149,8 +149,6 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
 
-
-
     public void makeMove(ChessMove move) throws InvalidMoveException {
         // Get the piece at the start position
         ChessPiece piece = board.getPiece(move.getStartPosition());
