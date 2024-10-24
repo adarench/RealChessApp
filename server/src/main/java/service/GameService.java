@@ -22,6 +22,7 @@ public class GameService {
   public GameData createGame(String authToken, String gameName) throws DataAccessException {
     // Ensure the user is authenticated
     AuthData auth = authDAO.getAuth(authToken);
+
     if (auth == null) {
       throw new DataAccessException("Unauthorized.");
     }
@@ -44,6 +45,7 @@ public class GameService {
 
   // Join a game
   public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
+
     if (playerColor == null || playerColor.isEmpty()) {
       throw new DataAccessException("Player color is required.");
     }

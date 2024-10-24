@@ -23,21 +23,36 @@ public class UserHandler{
     res.type("application/json");
 
     try {
-      // parse request body into UserData
+      // Parse request body into UserData
       UserData userData = gson.fromJson(req.body(), UserData.class);
 
-      // register the user using the UserService
+      // **Input Validation**
+      if (userData == null ||
+              userData.username() == null || userData.username().isEmpty() ||
+              userData.password() == null || userData.password().isEmpty() ||
+              userData.email() == null || userData.email().isEmpty()) {
+        res.status(400); // Bad Request
+        return gson.toJson(new ErrorResponse("Error: bad request"));
+      }
+
+      // Register the user using the UserService
       AuthData authData = userService.register(userData);
 
-      // return success response with the auth token
+      // Return success response with the auth token
       res.status(200);
       return gson.toJson(authData);
+
     } catch (DataAccessException e) {
-      res.type("application/json");
-      res.status(403);
+      // Username already taken
+      res.status(403); // Forbidden
       return gson.toJson(new ErrorResponse(e.getMessage()));
+    } catch (Exception e) {
+      // Other server errors
+      res.status(500); // Internal Server Error
+      return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
     }
   };
+
 
 
 

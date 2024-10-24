@@ -18,27 +18,43 @@ public class GameHandler{
     this.gameService = gameService;
   }
   //creating a new game POST
+
   public Route createGame = (Request req, Response res) -> {
     res.type("application/json");
 
     try {
-      //get auth token
+      // Get the auth token from the headers
       String authToken = req.headers("Authorization");
 
-      //parse request body
+      // Check if authToken is missing
+      if (authToken == null || authToken.isEmpty()) {
+        res.status(401); // Unauthorized
+        return gson.toJson(new ErrorResponse("Error: auth token not found"));
+      }
+
+      // Parse request body
       CreateGameRequest createGameRequest = gson.fromJson(req.body(), CreateGameRequest.class);
 
-      //create new game
+      // Input validation
+      if (createGameRequest == null ||
+              createGameRequest.gameName == null || createGameRequest.gameName.isEmpty()) {
+        res.status(400); // Bad Request
+        return gson.toJson(new ErrorResponse("Error: bad request"));
+      }
+
+      // Create new game
       GameData gameData = gameService.createGame(authToken, createGameRequest.gameName);
 
-      //return success
+      // Return success
       res.status(200);
       return gson.toJson(gameData);
-    } catch (DataAccessException e) {
-      res.type("application/json");
 
-      res.status(400); // Bad request
-      return gson.toJson(new ErrorResponse(e.getMessage()));
+    } catch (DataAccessException e) {
+      res.status(401); // Unauthorized
+      return gson.toJson(new ErrorResponse("Error: invalid auth token"));
+    } catch (Exception e) {
+      res.status(500); // Internal Server Error
+      return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
     }
   };
 
@@ -75,8 +91,21 @@ public class GameHandler{
       // Extract the auth token from the headers
       String authToken = req.headers("Authorization");
 
+      // Check if authToken is missing
+      if (authToken == null || authToken.isEmpty()) {
+        res.status(401); // Unauthorized
+        return gson.toJson(new ErrorResponse("Error: Auth token not found."));
+      }
+
       // Parse request body to get gameID and playerColor
       JoinGameRequest joinGameRequest = gson.fromJson(req.body(), JoinGameRequest.class);
+
+      if (joinGameRequest == null ||
+              joinGameRequest.gameID <= 0 ||
+              joinGameRequest.playerColor == null || joinGameRequest.playerColor.isEmpty()) {
+        res.status(400); // Bad Request
+        return gson.toJson(new ErrorResponse("Error: bad request"));
+      }
 
       // Join the game
       gameService.joinGame(authToken, joinGameRequest.gameID, joinGameRequest.playerColor);
@@ -87,10 +116,24 @@ public class GameHandler{
     } catch (DataAccessException e) {
       res.type("application/json");
 
-      res.status(400); // Bad request
-      return gson.toJson(new ErrorResponse(e.getMessage()));
+      String errorMessage = e.getMessage();
+
+      // **Set the status code based on the error message**
+      if (errorMessage.contains("Auth token not found") || errorMessage.contains("Invalid auth token")) {
+        res.status(401); // Unauthorized
+      } else if (errorMessage.contains("spot already taken") || errorMessage.contains("Spot already taken")) {
+        res.status(403); // Forbidden
+      } else {
+        res.status(400); // Bad Request
+      }
+      return gson.toJson(new ErrorResponse("Error: " + errorMessage));
+    } catch (Exception e) {
+      res.status(500); // Internal Server Error
+      return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
     }
   };
+
+
 
   //helper classes
   private static class CreateGameRequest {
