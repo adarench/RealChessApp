@@ -23,10 +23,8 @@ public class UserHandler{
     res.type("application/json");
 
     try {
-      // Parse request body into UserData
       UserData userData = gson.fromJson(req.body(), UserData.class);
 
-      // **Input Validation**
       if (userData == null ||
               userData.username() == null || userData.username().isEmpty() ||
               userData.password() == null || userData.password().isEmpty() ||
