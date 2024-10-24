@@ -132,7 +132,7 @@ public class ChessGame {
                     break;
                 }
             }
-            if (kingPosition != null) break;
+            if (kingPosition != null) {break;}
         }
 
         // Check if the king is under attack
