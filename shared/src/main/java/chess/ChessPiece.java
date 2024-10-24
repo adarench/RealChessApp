@@ -18,9 +18,7 @@ public class ChessPiece {
         this.teamColor = pieceColor;
     }
 
-    public ChessPiece deepCopy(){
-        return new ChessPiece(this.teamColor, this.pieceType);
-    }
+
     /**
      * The various different chess piece options
      */
