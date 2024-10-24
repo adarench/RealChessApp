@@ -7,7 +7,7 @@ import java.util.Map;
 public class AuthDAO {
 
   // In-memory auth store (will eventually be replaced by a database)
-  private final Map<String, AuthData> authTokens = new HashMap<>();
+  private static final Map<String, AuthData> authTokens = new HashMap<>();
 
   // Method to create a new auth token
   public void createAuth(AuthData auth) throws DataAccessException {

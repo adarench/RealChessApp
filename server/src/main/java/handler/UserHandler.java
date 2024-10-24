@@ -20,6 +20,8 @@ public class UserHandler{
 
   //user registration
   public Route register = (Request req, Response res) -> {
+    res.type("application/json");
+
     try {
       // parse request body into UserData
       UserData userData = gson.fromJson(req.body(), UserData.class);
@@ -31,13 +33,20 @@ public class UserHandler{
       res.status(200);
       return gson.toJson(authData);
     } catch (DataAccessException e) {
-      res.status(400);
+      res.type("application/json");
+      res.status(403);
       return gson.toJson(new ErrorResponse(e.getMessage()));
     }
   };
 
+
+
+
+
   // handle user login (/session POST)
   public Route login = (Request req, Response res) -> {
+    res.type("application/json");
+
     try {
       //parse request body for login credentials
       LoginRequest loginRequest = gson.fromJson(req.body(), LoginRequest.class);
@@ -47,8 +56,10 @@ public class UserHandler{
 
       //return success response with the auth token
       res.status(200);
+
       return gson.toJson(authData);
     } catch (DataAccessException e) {
+      res.type("application/json");
       res.status(401); // Unauthorized
       return gson.toJson(new ErrorResponse(e.getMessage()));
     }
@@ -56,6 +67,8 @@ public class UserHandler{
 
   //handle user logout (/session DELETE)
   public Route logout = (Request req, Response res) -> {
+    res.type("application/json");
+
     try {
       //extract the auth token from the headers
       String authToken = req.headers("Authorization");
@@ -67,6 +80,7 @@ public class UserHandler{
       res.status(200);
       return gson.toJson(new SuccessResponse(true));
     } catch (DataAccessException e) {
+      res.type("application/json");
       res.status(401); // Unauthorized
       return gson.toJson(new ErrorResponse(e.getMessage()));
     }
@@ -80,7 +94,7 @@ public class UserHandler{
   private static class ErrorResponse {
     String message;
     ErrorResponse(String message) {
-      this.message = message;
+      this.message = "Error: " + message;
     }
   }
 

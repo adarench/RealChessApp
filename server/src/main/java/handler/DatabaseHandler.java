@@ -17,12 +17,16 @@ public class DatabaseHandler{
 
   //clearing database DELETE
   public Route clearDatabase = (Request req, Response res) -> {
+    res.type("application/json");
+
     try {
       databaseService.clearDatabase();
 
       res.status(200);
       return gson.toJson(new SuccessResponse(true));
     } catch (DataAccessException e) {
+      res.type("application/json");
+
       res.status(500);
       return gson.toJson(new ErrorResponse(e.getMessage()));
     }
@@ -31,7 +35,7 @@ public class DatabaseHandler{
 private static class ErrorResponse {
   String message;
   ErrorResponse(String message){
-    this.message = message;
+    this.message = "Error: " + message;
   }
 }
 

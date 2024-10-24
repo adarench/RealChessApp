@@ -9,7 +9,7 @@ import java.util.Map;
 public class GameDAO {
 
   // In-memory game store (will eventually be replaced by a database)
-  private final Map<Integer, GameData> games = new HashMap<>();
+  private static final Map<Integer, GameData> games = new HashMap<>();
   private int nextGameID = 1;
 
   // Method to create a new game

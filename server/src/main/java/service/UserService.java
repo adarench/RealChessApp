@@ -20,10 +20,9 @@ public class UserService{
 
   //registration
   public AuthData register(UserData user) throws DataAccessException{
-    if(userDAO.getUser(user.username()) != null){
-      throw new DataAccessException("User already exists");
-    }
+
     userDAO.createUser(user);
+
     String authToken = UUID.randomUUID().toString();
     AuthData authData = new AuthData(authToken, user.username());
     authDAO.createAuth(authData);

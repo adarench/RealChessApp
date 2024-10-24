@@ -8,7 +8,7 @@ import java.util.Map;
 public class UserDAO {
 
   // In-memory user store (this will eventually be replaced by a database)
-  private final Map<String, UserData> users = new HashMap<>();
+  private static final Map<String, UserData> users = new HashMap<>();
 
   // Method to create a new user
   public void createUser(UserData user) throws DataAccessException {

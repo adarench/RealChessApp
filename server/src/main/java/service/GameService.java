@@ -44,6 +44,16 @@ public class GameService {
 
   // Join a game
   public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
+    if (playerColor == null || playerColor.isEmpty()) {
+      throw new DataAccessException("Player color is required.");
+    }
+    if (authToken == null || authToken.isEmpty()) {
+      throw new DataAccessException("Auth token is required.");
+    }
+    if (gameID <= 0) {
+      throw new DataAccessException("Valid gameID is required.");
+    }
+
     // Ensure the user is authenticated
     AuthData auth = authDAO.getAuth(authToken);
     if (auth == null) {

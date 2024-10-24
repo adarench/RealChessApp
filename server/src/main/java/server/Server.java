@@ -9,6 +9,8 @@ import service.DatabaseService;
 import dataAccess.UserDAO;
 import dataAccess.GameDAO;
 import dataAccess.AuthDAO;
+import spark.Spark;
+
 import static spark.Spark.*;
 
 
@@ -17,6 +19,7 @@ public class Server {
   public static int run(int port) {
     // Set the port for the Spark server
     port(port); // You can change this port as needed
+    staticFiles.location("/web");
 
     // initialize DAOs (data access objects)
     UserDAO userDAO=new UserDAO();
@@ -54,7 +57,7 @@ public class Server {
 
 
   public void stop() {
-    stop();
+    Spark.stop();
     awaitStop();
   }
 }
