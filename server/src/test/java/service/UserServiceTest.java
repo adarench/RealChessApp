@@ -1,4 +1,4 @@
-package passoff.service;
+package service;
 
 import dataAccess.UserDAO;
 import dataAccess.AuthDAO;
