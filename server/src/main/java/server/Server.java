@@ -10,12 +10,24 @@ import dataaccess.UserDAO;
 import dataaccess.GameDAO;
 import dataaccess.AuthDAO;
 import spark.Spark;
+import dataaccess.DatabaseManager;
+import dataaccess.DataAccessException;
 
 import static spark.Spark.*;
 
 
 
 public class Server {
+
+  try {
+    // Initialize the database and tables
+    DatabaseManager.createDatabase();
+    DatabaseManager.createTables();
+  } catch (DataAccessException e) {
+    System.err.println("Failed to initialize database: " + e.getMessage());
+    e.printStackTrace();
+    return -1; // return an error code if database initialization fails
+  }
   public static int run(int port) {
     // Set the port for the Spark server
     port(port); // You can change this port as needed
