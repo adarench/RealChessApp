@@ -12,40 +12,39 @@ public class GameService {
 
   private final GameDAO gameDAO;
   private final AuthDAO authDAO;
+  private static final boolean USE_DATABASE = true; // Toggle for database vs in-memory storage
 
   public GameService(GameDAO gameDAO, AuthDAO authDAO) {
     this.gameDAO = gameDAO;
     this.authDAO = authDAO;
   }
 
-  // Create a new game
+  // Create a new game with database support
   public GameData createGame(String authToken, String gameName) throws DataAccessException {
     // Ensure the user is authenticated
-    AuthData auth = authDAO.getAuth(authToken);
-
+    AuthData auth = USE_DATABASE ? authDAO.getAuthFromDatabase(authToken) : authDAO.getAuth(authToken);
     if (auth == null) {
       throw new DataAccessException("Unauthorized.");
     }
 
-    // Create a new game
-    return gameDAO.createGame(gameName);
+    // Create a new game in either in-memory or database storage
+    return USE_DATABASE ? gameDAO.createGameInDatabase(gameName) : gameDAO.createGame(gameName);
   }
 
-  // List all games
+  // List all games with database support
   public List<GameData> listGames(String authToken) throws DataAccessException {
     // Ensure the user is authenticated
-    AuthData auth = authDAO.getAuth(authToken);
+    AuthData auth = USE_DATABASE ? authDAO.getAuthFromDatabase(authToken) : authDAO.getAuth(authToken);
     if (auth == null) {
       throw new DataAccessException("Unauthorized.");
     }
 
-    // List all games
-    return gameDAO.listGames();
+    // List games from either in-memory or database storage
+    return USE_DATABASE ? gameDAO.listGamesFromDatabase() : gameDAO.listGames();
   }
 
-  // Join a game
+  // Join a game with database support
   public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
-
     if (playerColor == null || playerColor.isEmpty()) {
       throw new DataAccessException("Player color is required.");
     }
@@ -57,13 +56,13 @@ public class GameService {
     }
 
     // Ensure the user is authenticated
-    AuthData auth = authDAO.getAuth(authToken);
+    AuthData auth = USE_DATABASE ? authDAO.getAuthFromDatabase(authToken) : authDAO.getAuth(authToken);
     if (auth == null) {
       throw new DataAccessException("Unauthorized.");
     }
 
     // Retrieve the game
-    GameData game = gameDAO.getGame(gameID);
+    GameData game = USE_DATABASE ? gameDAO.getGameFromDatabase(gameID) : gameDAO.getGame(gameID);
 
     // Add the player to the game (either as white or black)
     if (playerColor.equalsIgnoreCase("WHITE")) {
@@ -80,7 +79,11 @@ public class GameService {
       throw new DataAccessException("Invalid player color.");
     }
 
-    // Update the game
-    gameDAO.updateGame(game);
+    // Update the game in either in-memory or database storage
+    if (USE_DATABASE) {
+      gameDAO.updateGameInDatabase(game);
+    } else {
+      gameDAO.updateGame(game);
+    }
   }
 }

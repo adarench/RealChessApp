@@ -19,16 +19,29 @@ import static spark.Spark.*;
 
 public class Server {
 
-  try {
-    // Initialize the database and tables
-    DatabaseManager.createDatabase();
-    DatabaseManager.createTables();
-  } catch (DataAccessException e) {
-    System.err.println("Failed to initialize database: " + e.getMessage());
-    e.printStackTrace();
-    return -1; // return an error code if database initialization fails
+  public static void main(String[] args) {
+    int port = 8080; // Default port
+
+    // Use the command-line argument for the port, if provided
+    if (args.length > 0) {
+      port = Integer.parseInt(args[0]);
+    }
+
+    // Start the server on the specified or default port
+    run(port);
   }
+
   public static int run(int port) {
+
+    try {
+      // Initialize the database and tables
+      DatabaseManager.createDatabase();
+      DatabaseManager.createTables();
+    } catch (DataAccessException e) {
+      System.err.println("Failed to initialize database: " + e.getMessage());
+      e.printStackTrace();
+      return -1; // return an error code if database initialization fails
+    }
     // Set the port for the Spark server
     port(port); // You can change this port as needed
     staticFiles.location("/web");
