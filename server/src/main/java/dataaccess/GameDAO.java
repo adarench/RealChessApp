@@ -25,10 +25,14 @@ public class GameDAO {
   // Database-backed method to create a new game
   public GameData createGameInDatabase(String gameName) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "INSERT INTO games (gameName) VALUES (?)";
+      String sql = "INSERT INTO Games (game_name) VALUES (?)";
       try (PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
         stmt.setString(1, gameName);
-        stmt.executeUpdate();
+        int affectedRows = stmt.executeUpdate();
+
+        if (affectedRows == 0) {
+          throw new DataAccessException("Creating user failed, no rows affected.");
+        }
 
         // Retrieve the auto-generated game ID
         try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
@@ -55,12 +59,12 @@ public class GameDAO {
   // Database-backed method to get a game by ID
   public GameData getGameFromDatabase(int gameID) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "SELECT * FROM games WHERE gameID = ?";
+      String sql = "SELECT * FROM Games WHERE game_id = ?";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.setInt(1, gameID);
         try (ResultSet rs = stmt.executeQuery()) {
           if (rs.next()) {
-            return new GameData(rs.getInt("gameID"), null, null, rs.getString("gameName"));
+            return new GameData(rs.getInt("game_id"), null, null, rs.getString("game_name"));
           } else {
             throw new DataAccessException("Game not found.");
           }
@@ -79,11 +83,11 @@ public class GameDAO {
   public List<GameData> listGamesFromDatabase() throws DataAccessException {
     List<GameData> games = new ArrayList<>();
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "SELECT * FROM games";
+      String sql = "SELECT * FROM Games";
       try (PreparedStatement stmt = conn.prepareStatement(sql);
            ResultSet rs = stmt.executeQuery()) {
         while (rs.next()) {
-          games.add(new GameData(rs.getInt("gameID"), null, null, rs.getString("gameName")));
+          games.add(new GameData(rs.getInt("game_id"), null, null, rs.getString("game_name")));
         }
       }
     } catch (SQLException e) {
@@ -107,7 +111,7 @@ public class GameDAO {
   // Clear all games from the database
   public void clearAllGamesFromDatabase() throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "DELETE FROM games";
+      String sql = "DELETE FROM Games";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.executeUpdate();
       }
@@ -118,7 +122,7 @@ public class GameDAO {
   public void updateGameInDatabase(GameData game) throws DataAccessException {
     // Implement SQL update for updating a game in the database
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "UPDATE games SET whiteUsername = ?, blackUsername = ? WHERE gameID = ?";
+      String sql = "UPDATE Games SET white_username = ?, black_username = ? game_state = ? WHERE game_id = ?";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.setString(1, game.whiteUsername());
         stmt.setString(2, game.blackUsername());

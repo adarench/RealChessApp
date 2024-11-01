@@ -3,7 +3,9 @@ package dataaccess;
 import java.sql.*;
 import java.util.Properties;
 import dataaccess.DataAccessException;
-
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -14,6 +16,8 @@ public class DatabaseManager {
   private static final String USER;
   private static final String PASSWORD;
   private static final String CONNECTION_URL;
+  private static final String HOST;
+  private static final int PORT;
 
   /*
    * Load the database information for the db.properties file.
@@ -30,9 +34,10 @@ public class DatabaseManager {
         USER = props.getProperty("db.user");
         PASSWORD = props.getProperty("db.password");
 
-        var host = props.getProperty("db.host");
-        var port = Integer.parseInt(props.getProperty("db.port"));
-        CONNECTION_URL = String.format("jdbc:mysql://localhost:3306", host, port, DATABASE_NAME);
+        HOST = props.getProperty("db.host");
+        PORT = Integer.parseInt(props.getProperty("db.port"));
+        CONNECTION_URL = String.format("jdbc:mysql://%s:%d/%s", HOST, PORT, DATABASE_NAME);
+
       }
     } catch (Exception ex) {
       throw new RuntimeException("unable to process db.properties. " + ex.getMessage());
@@ -43,14 +48,15 @@ public class DatabaseManager {
    * Creates the database if it does not already exist.
    */
   public static void createDatabase() throws DataAccessException {
-    try {
-      var statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
-      var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
-      try (var preparedStatement = conn.prepareStatement(statement)) {
-        preparedStatement.executeUpdate();
-      }
+    String urlWithoutDatabase = String.format("jdbc:mysql://%s:%d/", HOST, PORT);
+    try (Connection conn = DriverManager.getConnection(urlWithoutDatabase, USER, PASSWORD);
+         Statement stmt = conn.createStatement()) {
+
+      String statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
+      stmt.executeUpdate(statement);
+
     } catch (SQLException e) {
-      throw new DataAccessException(e.getMessage());
+      throw new DataAccessException("Error creating database: " + e.getMessage());
     }
   }
 
@@ -69,7 +75,9 @@ public class DatabaseManager {
   static Connection getConnection() throws DataAccessException {
     try {
       var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
-      conn.setCatalog(DATABASE_NAME);
+
+      //conn.setCatalog(DATABASE_NAME);
+      System.out.println("Connection successful: " + (conn != null));
       return conn;
     } catch (SQLException e) {
       throw new DataAccessException(e.getMessage());
@@ -81,12 +89,16 @@ public class DatabaseManager {
             "user_id INT AUTO_INCREMENT PRIMARY KEY, " +
             "username VARCHAR(50) NOT NULL UNIQUE, " +
             "hashed_password VARCHAR(255) NOT NULL, " +
+            "email VARCHAR(255) NOT NULL, " +
             "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
             ")";
 
     String createGamesTable = "CREATE TABLE IF NOT EXISTS Games (" +
             "game_id INT AUTO_INCREMENT PRIMARY KEY, " +
-            "game_state JSON NOT NULL, " +
+            "game_name VARCHAR(255) NOT NULL, " +
+            "white_username VARCHAR(50), " +
+            "black_username VARCHAR(50), " +
+            "game_state JSON, " +
             "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
             ")";
     String createAuthTable = "CREATE TABLE IF NOT EXISTS auth (" +
@@ -98,6 +110,7 @@ public class DatabaseManager {
       try (var stmt = conn.createStatement()) {
         stmt.executeUpdate(createUsersTable);
         stmt.executeUpdate(createGamesTable);
+        stmt.executeUpdate(createAuthTable);
       }
     } catch (SQLException e) {
       throw new DataAccessException(e.getMessage());

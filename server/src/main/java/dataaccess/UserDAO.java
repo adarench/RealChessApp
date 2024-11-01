@@ -23,12 +23,16 @@ public class UserDAO {
   // Database-backed method to create a new user
   public void createUserInDatabase(UserData user) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+      String sql = "INSERT INTO Users (username, password, email) VALUES (?, ?, ?)";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.setString(1, user.username());
         stmt.setString(2, user.password());
         stmt.setString(3, user.email());
-        stmt.executeUpdate();
+        int affectedRows = stmt.executeUpdate();
+
+        if (affectedRows == 0) {
+          throw new DataAccessException("Creating user failed, no rows affected.");
+        }
       }
     } catch (SQLException e) {
       throw new DataAccessException("Error creating user in database: " + e.getMessage());
@@ -38,7 +42,7 @@ public class UserDAO {
   // Database-backed method to get a user by username
   public UserData getUserFromDatabase(String username) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "SELECT * FROM users WHERE username = ?";
+      String sql = "SELECT * FROM Users WHERE username = ?";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.setString(1, username);
         try (ResultSet rs = stmt.executeQuery()) {
@@ -69,7 +73,7 @@ public class UserDAO {
   }
   public void clearAllUsersFromDatabase() throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      String sql = "DELETE FROM users";
+      String sql = "DELETE FROM Users";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.executeUpdate();
       }

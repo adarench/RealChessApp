@@ -8,6 +8,9 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.sql.ResultSet;
 
 public class AuthDAO {
 
@@ -29,17 +32,23 @@ public class AuthDAO {
   }
   // Database-backed method for creating auth using `username` as identifier
   public void createAuthInDatabase(AuthData auth) throws DataAccessException {
+    System.out.println("Attempting to insert auth data into database...");
     try (Connection conn = DatabaseManager.getConnection()) {
       String sql = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.setString(1, auth.authToken());
-        stmt.setString(2, auth.username());  // Use username as the unique identifier
-        stmt.executeUpdate();
+        stmt.setString(2, auth.username());
+        int affectedRows = stmt.executeUpdate();
+        System.out.println("Rows inserted: " + affectedRows);
+        if (affectedRows == 0) {
+          throw new DataAccessException("Insert operation failed; no rows affected.");
+        }
       }
     } catch (SQLException e) {
       throw new DataAccessException("Error creating auth token in database: " + e.getMessage());
     }
   }
+
 
   // Method to get an auth token from the database
   public AuthData getAuthFromDatabase(String authToken) throws DataAccessException {
@@ -87,14 +96,27 @@ public class AuthDAO {
 
   // Method to delete an auth token (for logging out)
   public void deleteAuth(String authToken) throws DataAccessException {
-    if (!AUTH_TOKENS.containsKey(authToken)) {
-      throw new DataAccessException("Auth token not found.");
+    if (USE_DATABASE) {
+      deleteAuthFromDatabase(authToken);  // Delete from the database
+    } else {
+      if (!AUTH_TOKENS.containsKey(authToken)) {
+        throw new DataAccessException("Auth token not found.");
+      }
+      AUTH_TOKENS.remove(authToken);
     }
-    AUTH_TOKENS.remove(authToken);
   }
 
   // Method to clear all auth tokens
   public void clearAllAuthTokens() throws DataAccessException {
-    AUTH_TOKENS.clear();
+    if (USE_DATABASE) {
+      try (Connection conn = DatabaseManager.getConnection()) {
+        try (Statement stmt = conn.createStatement()) {
+          stmt.executeUpdate("DELETE FROM auth");
+        }
+      } catch (SQLException e) {
+        throw new DataAccessException("Error clearing auth tokens from database: " + e.getMessage());
+      }
+    }
+    AUTH_TOKENS.clear();  // Always clear in-memory for compatibility
   }
 }
