@@ -9,34 +9,41 @@ import service.DatabaseService;
 import dataaccess.UserDAO;
 import dataaccess.GameDAO;
 import dataaccess.AuthDAO;
+import dataaccess.DatabaseManager; // Import DatabaseManager for initialization
 import spark.Spark;
 
 import static spark.Spark.*;
 
-
-
 public class Server {
   public static int run(int port) {
+    // Initialize the database and tables
+    try {
+      DatabaseManager.initializeDatabase();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.exit(1); // Exit if database initialization fails
+    }
+
     // Set the port for the Spark server
     port(port); // You can change this port as needed
     staticFiles.location("/web");
 
-    // initialize DAOs (data access objects)
-    UserDAO userDAO=new UserDAO();
-    GameDAO gameDAO=new GameDAO();
-    AuthDAO authDAO=new AuthDAO();
+    // Initialize DAOs (data access objects)
+    UserDAO userDAO = new UserDAO();
+    GameDAO gameDAO = new GameDAO();
+    AuthDAO authDAO = new AuthDAO();
 
-    // initialize services
-    UserService userService=new UserService(userDAO, authDAO);
-    GameService gameService=new GameService(gameDAO, authDAO);
-    DatabaseService databaseService=new DatabaseService(userDAO, gameDAO, authDAO);
+    // Initialize services
+    UserService userService = new UserService(userDAO, authDAO);
+    GameService gameService = new GameService(gameDAO, authDAO);
+    DatabaseService databaseService = new DatabaseService(userDAO, gameDAO, authDAO);
 
-    // initialize handlers and pass the services to them
-    UserHandler userHandler=new UserHandler(userService);
-    GameHandler gameHandler=new GameHandler(gameService);
-    DatabaseHandler databaseHandler=new DatabaseHandler(databaseService);
+    // Initialize handlers and pass the services to them
+    UserHandler userHandler = new UserHandler(userService);
+    GameHandler gameHandler = new GameHandler(gameService);
+    DatabaseHandler databaseHandler = new DatabaseHandler(databaseService);
 
-    // routes
+    // Routes
     post("/user", userHandler.register);        // register
     post("/session", userHandler.login);        // login
     delete("/session", userHandler.logout);     // logout
@@ -49,12 +56,10 @@ public class Server {
     // Route for clearing the database
     delete("/db", databaseHandler.clearDatabase); // clear db
 
-    // spark will listen on port
+    // Spark will listen on port
     awaitInitialization();
     return port();
   }
-
-
 
   public void stop() {
     Spark.stop();

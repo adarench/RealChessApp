@@ -33,6 +33,10 @@ public class DatabaseManager {
         }
     }
 
+    public static void initializeDatabase() throws DataAccessException {
+        createDatabase();
+        createTables();
+    }
     /**
      * Creates the database if it does not already exist.
      */
@@ -45,6 +49,44 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             throw new DataAccessException(e.getMessage());
+        }
+    }
+
+    static void createTables() throws DataAccessException {
+        try (Connection conn = getConnection()) {
+            try (Statement stmt = conn.createStatement()) {
+                // Users Table
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS Users (
+                        username VARCHAR(255) PRIMARY KEY,
+                        password VARCHAR(255) NOT NULL,
+                        email VARCHAR(255) UNIQUE NOT NULL
+                    )
+                """);
+
+                // AuthTokens Table
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS AuthTokens (
+                        authToken VARCHAR(255) PRIMARY KEY,
+                        username VARCHAR(255) NOT NULL,
+                        FOREIGN KEY (username) REFERENCES Users(username)
+                    )
+                """);
+
+                // Games Table
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS Games (
+                        gameID INT AUTO_INCREMENT PRIMARY KEY,
+                        gameName VARCHAR(255) NOT NULL,
+                        whiteUsername VARCHAR(255),
+                        blackUsername VARCHAR(255),
+                        FOREIGN KEY (whiteUsername) REFERENCES Users(username),
+                        FOREIGN KEY (blackUsername) REFERENCES Users(username)
+                    )
+                """);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error creating tables: " + e.getMessage());
         }
     }
 

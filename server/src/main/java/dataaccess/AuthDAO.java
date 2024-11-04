@@ -1,38 +1,76 @@
 package dataaccess;
 
+// SQL and database imports
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+// Custom exception class for handling data access exceptions
+import dataaccess.DataAccessException;
+
+// Model class for authentication data
 import model.AuthData;
-import java.util.HashMap;
-import java.util.Map;
+
+// BCrypt library for password hashing and verification
+import org.mindrot.jbcrypt.BCrypt;
+import java.sql.ResultSet;
+
+//import java.util.HashMap;
+//import java.util.Map;
 
 public class AuthDAO {
 
-  // In-memory auth store (will eventually be replaced by a database)
-  private static final Map<String, AuthData> AUTH_TOKENS = new HashMap<>();
-
-  // Method to create a new auth token
   public void createAuth(AuthData auth) throws DataAccessException {
-    AUTH_TOKENS.put(auth.authToken(), auth);
+    try (Connection conn = DatabaseManager.getConnection()) {
+      String sql = "INSERT INTO AuthTokens (authToken, username) VALUES (?, ?)";
+      try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, auth.authToken());
+        stmt.setString(2, auth.username());
+        stmt.executeUpdate();
+      }
+    } catch (SQLException e) {
+      throw new DataAccessException(e.getMessage());
+    }
   }
 
-  // Method to get an auth token
   public AuthData getAuth(String authToken) throws DataAccessException {
-    AuthData auth = AUTH_TOKENS.get(authToken);
-    if (auth == null) {
-      throw new DataAccessException("Auth token not found.");
+    try (Connection conn = DatabaseManager.getConnection()) {
+      String sql = "SELECT * FROM AuthTokens WHERE authToken = ?";
+      try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, authToken);
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+          return new AuthData(rs.getString("authToken"), rs.getString("username"));
+        } else {
+          throw new DataAccessException("Auth token not found.");
+        }
+      }
+    } catch (SQLException e) {
+      throw new DataAccessException(e.getMessage());
     }
-    return auth;
   }
 
-  // Method to delete an auth token (for logging out)
   public void deleteAuth(String authToken) throws DataAccessException {
-    if (!AUTH_TOKENS.containsKey(authToken)) {
-      throw new DataAccessException("Auth token not found.");
+    try (Connection conn = DatabaseManager.getConnection()) {
+      String sql = "DELETE FROM AuthTokens WHERE authToken = ?";
+      try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setString(1, authToken);
+        stmt.executeUpdate();
+      }
+    } catch (SQLException e) {
+      throw new DataAccessException(e.getMessage());
     }
-    AUTH_TOKENS.remove(authToken);
   }
 
-  // Method to clear all auth tokens
   public void clearAllAuthTokens() throws DataAccessException {
-    AUTH_TOKENS.clear();
+    try (Connection conn = DatabaseManager.getConnection()) {
+      String sql = "DELETE FROM AuthTokens";
+      try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.executeUpdate();
+      }
+    } catch (SQLException e) {
+      throw new DataAccessException(e.getMessage());
+    }
   }
 }
