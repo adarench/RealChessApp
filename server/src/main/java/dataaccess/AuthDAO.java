@@ -1,23 +1,10 @@
 package dataaccess;
 
-// SQL and database imports
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-// Custom exception class for handling data access exceptions
-import dataaccess.DataAccessException;
-
-// Model class for authentication data
 import model.AuthData;
-
-// BCrypt library for password hashing and verification
-import org.mindrot.jbcrypt.BCrypt;
-import java.sql.ResultSet;
-
-//import java.util.HashMap;
-//import java.util.Map;
 
 public class AuthDAO {
 
