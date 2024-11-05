@@ -17,9 +17,9 @@ public class DatabaseService{
   }
   // clear database records
   public void clearDatabase() throws DataAccessException {
-    userDAO.clearAllUsers();
-    gameDAO.clearAllGames();
     authDAO.clearAllAuthTokens();
+    gameDAO.clearAllGames();
+    userDAO.clearAllUsers();
   }
 
 

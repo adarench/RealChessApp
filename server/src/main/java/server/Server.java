@@ -56,6 +56,9 @@ public class Server {
     // Route for clearing the database
     delete("/db", databaseHandler.clearDatabase); // clear db
 
+    // Add a shutdown hook to close the connection pool on server shutdown
+    Runtime.getRuntime().addShutdownHook(new Thread(DatabaseManager::close));
+
     // Spark will listen on port
     awaitInitialization();
     return port();

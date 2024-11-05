@@ -25,28 +25,23 @@ public class UserHandler{
     try {
       UserData userData = gson.fromJson(req.body(), UserData.class);
 
-      if (userData == null ||
-              userData.username() == null || userData.username().isEmpty() ||
-              userData.password() == null || userData.password().isEmpty() ||
-              userData.email() == null || userData.email().isEmpty()) {
-        res.status(400); // Bad Request
-        return gson.toJson(new ErrorResponse("Error: bad request"));
+      if (userData == null || userData.username() == null || userData.username().isEmpty()
+              || userData.password() == null || userData.password().isEmpty()
+              || userData.email() == null || userData.email().isEmpty()) {
+        res.status(400);
+        return gson.toJson(new ErrorResponse("Error: Missing or invalid fields"));
       }
 
-      // Register the user using the UserService
       AuthData authData = userService.register(userData);
-
-      // Return success response with the auth token
       res.status(200);
       return gson.toJson(authData);
 
     } catch (DataAccessException e) {
-      // Username already taken
-      res.status(403); // Forbidden
-      return gson.toJson(new ErrorResponse(e.getMessage()));
-    } catch (Exception e) {
-      // Other server errors
-      res.status(500); // Internal Server Error
+      if (e.getMessage().contains("Username already exists")) {
+        res.status(403);
+        return gson.toJson(new ErrorResponse("Error: Username already exists"));
+      }
+      res.status(500);
       return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
     }
   };
@@ -54,27 +49,40 @@ public class UserHandler{
 
 
 
-
-
+  // handle user login (/session POST)
   // handle user login (/session POST)
   public Route login = (Request req, Response res) -> {
     res.type("application/json");
 
     try {
-      //parse request body for login credentials
-      LoginRequest loginRequest = gson.fromJson(req.body(), LoginRequest.class);
+      // Parse the request body
+      UserData userData = gson.fromJson(req.body(), UserData.class);
 
-      //log in the user using the UserService
-      AuthData authData = userService.login(loginRequest.username, loginRequest.password);
+      if (userData == null ||
+              userData.username() == null || userData.username().isEmpty() ||
+              userData.password() == null || userData.password().isEmpty()) {
+        res.status(400);
+        return gson.toJson(new ErrorResponse("Error: Missing or invalid fields"));
+      }
 
-      //return success response with the auth token
+      // Authenticate the user
+      AuthData authData = userService.login(userData.username(), userData.password());
+
+      if (authData == null) {
+        res.status(401);
+        return gson.toJson(new ErrorResponse("Error: Invalid username or password"));
+      }
+
       res.status(200);
-
       return gson.toJson(authData);
+
     } catch (DataAccessException e) {
-      res.type("application/json");
-      res.status(401); // Unauthorized
-      return gson.toJson(new ErrorResponse(e.getMessage()));
+      if (e.getMessage().contains("User not found") || e.getMessage().contains("Invalid password")) {
+        res.status(401); // Unauthorized
+        return gson.toJson(new ErrorResponse("Error: Invalid username or password"));
+      }
+      res.status(500); // Internal server error for other issues
+      return gson.toJson(new ErrorResponse("Internal server error"));
     }
   };
 
@@ -107,7 +115,7 @@ public class UserHandler{
   private static class ErrorResponse {
     String message;
     ErrorResponse(String message) {
-      this.message = "Error: " + message;
+      this.message = message.startsWith("Error:") ? message : "Error: " + message;
     }
   }
 

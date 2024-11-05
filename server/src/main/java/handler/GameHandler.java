@@ -23,40 +23,36 @@ public class GameHandler{
     res.type("application/json");
 
     try {
-      // Get the auth token from the headers
       String authToken = req.headers("Authorization");
 
-      // Check if authToken is missing
+      // Check if authToken is missing (401 Unauthorized)
       if (authToken == null || authToken.isEmpty()) {
-        res.status(401); // Unauthorized
-        return gson.toJson(new ErrorResponse("Error: auth token not found"));
+        res.status(401);
+        return gson.toJson(new ErrorResponse("Unauthorized: Auth token not provided."));
       }
 
-      // Parse request body
       CreateGameRequest createGameRequest = gson.fromJson(req.body(), CreateGameRequest.class);
-
-      // Input validation
-      if (createGameRequest == null ||
-              createGameRequest.gameName == null || createGameRequest.gameName.isEmpty()) {
-        res.status(400); // Bad Request
-        return gson.toJson(new ErrorResponse("Error: bad request"));
+      if (createGameRequest == null || createGameRequest.gameName == null || createGameRequest.gameName.isEmpty()) {
+        res.status(400);
+        return gson.toJson(new ErrorResponse("Bad Request: Missing game name."));
       }
 
-      // Create new game
       GameData gameData = gameService.createGame(authToken, createGameRequest.gameName);
-
-      // Return success
       res.status(200);
       return gson.toJson(gameData);
 
     } catch (DataAccessException e) {
-      res.status(401); // Unauthorized
-      return gson.toJson(new ErrorResponse("Error: invalid auth token"));
-    } catch (Exception e) {
-      res.status(500); // Internal Server Error
-      return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
+      if (e.getMessage().contains("Unauthorized")) {
+        res.status(401); // Respond with 401 if authentication fails
+      } else if (e.getMessage().contains("Forbidden")) {
+        res.status(403); // Respond with 403 if access is forbidden
+      } else {
+        res.status(500); // Internal Server Error for unknown issues
+      }
+      return gson.toJson(new ErrorResponse(e.getMessage()));
     }
   };
+
 
   //list all games GET
   public Route listGames = (Request req, Response res) -> {
@@ -66,6 +62,11 @@ public class GameHandler{
       //extract the auth token from the headers
       String authToken = req.headers("Authorization");
 
+      // Check if authToken is missing
+      if (authToken == null || authToken.isEmpty()) {
+        res.status(401); // Unauthorized
+        return gson.toJson(new ErrorResponse("Error: Auth token not provided."));
+      }
       // List all games
       var games = gameService.listGames(authToken);
 
@@ -80,58 +81,52 @@ public class GameHandler{
 
       res.status(401);
       return gson.toJson(new ErrorResponse(e.getMessage()));
-    }
-  };
-
-  //join game case PUT
-  public Route joinGame = (Request req, Response res) -> {
-    res.type("application/json");
-
-    try {
-      // Extract the auth token from the headers
-      String authToken = req.headers("Authorization");
-
-      // Check if authToken is missing
-      if (authToken == null || authToken.isEmpty()) {
-        res.status(401); // Unauthorized
-        return gson.toJson(new ErrorResponse("Error: Auth token not found."));
-      }
-
-      // Parse request body to get gameID and playerColor
-      JoinGameRequest joinGameRequest = gson.fromJson(req.body(), JoinGameRequest.class);
-
-      if (joinGameRequest == null ||
-              joinGameRequest.gameID <= 0 ||
-              joinGameRequest.playerColor == null || joinGameRequest.playerColor.isEmpty()) {
-        res.status(400); // Bad Request
-        return gson.toJson(new ErrorResponse("Error: bad request"));
-      }
-
-      // Join the game
-      gameService.joinGame(authToken, joinGameRequest.gameID, joinGameRequest.playerColor);
-
-      // Return success response
-      res.status(200);
-      return gson.toJson(new SuccessResponse(true));
-    } catch (DataAccessException e) {
-      res.type("application/json");
-
-      String errorMessage = e.getMessage();
-
-      // **Set the status code based on the error message**
-      if (errorMessage.contains("Auth token not found") || errorMessage.contains("Invalid auth token")) {
-        res.status(401); // Unauthorized
-      } else if (errorMessage.contains("spot already taken") || errorMessage.contains("Spot already taken")) {
-        res.status(403); // Forbidden
-      } else {
-        res.status(400); // Bad Request
-      }
-      return gson.toJson(new ErrorResponse("Error: " + errorMessage));
-    } catch (Exception e) {
+    }catch (Exception e) {
       res.status(500); // Internal Server Error
       return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
     }
   };
+
+  //join game case PUT
+  // In GameHandler.java - Update joinGame to validate the auth token and ensure spot availability
+  // In GameHandler.java - Refine joinGame to fit existing structure
+  public Route joinGame = (Request req, Response res) -> {
+    res.type("application/json");
+
+    try {
+      String authToken = req.headers("Authorization");
+      if (authToken == null || authToken.isEmpty()) {
+        res.status(401);
+        return gson.toJson(new ErrorResponse("Unauthorized: Auth token not provided."));
+      }
+
+      JoinGameRequest joinGameRequest = gson.fromJson(req.body(), JoinGameRequest.class);
+      if (joinGameRequest == null || joinGameRequest.gameID <= 0 || joinGameRequest.playerColor == null || joinGameRequest.playerColor.isEmpty()) {
+        res.status(400);
+        return gson.toJson(new ErrorResponse("Bad Request: Missing or invalid fields."));
+      }
+
+      gameService.joinGame(authToken, joinGameRequest.gameID, joinGameRequest.playerColor);
+      res.status(200);
+      return gson.toJson(new SuccessResponse(true));
+
+    } catch (DataAccessException e) {
+      if (e.getMessage().contains("Unauthorized")) {
+        res.status(401);
+      } else if (e.getMessage().contains("Forbidden")) {
+        res.status(403);
+      } else if (e.getMessage().contains("Game not found")) {
+        res.status(404);
+      } else {
+        res.status(500);
+      }
+      return gson.toJson(new ErrorResponse(e.getMessage()));
+    }
+  };
+
+
+
+
 
 
 
@@ -148,7 +143,11 @@ public class GameHandler{
   private static class ErrorResponse {
     String message;
     ErrorResponse(String message) {
-      this.message ="Error: " + message;
+      if (message.startsWith("Error:")) {
+        this.message = message;
+      } else {
+        this.message = "Error: " + message;
+      }
     }
   }
 

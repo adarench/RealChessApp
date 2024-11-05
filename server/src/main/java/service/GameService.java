@@ -36,51 +36,42 @@ public class GameService {
     // Ensure the user is authenticated
     AuthData auth = authDAO.getAuth(authToken);
     if (auth == null) {
-      throw new DataAccessException("Unauthorized.");
+      throw new DataAccessException("Invalid auth token.");
     }
 
     // List all games
     return gameDAO.listGames();
   }
 
+
   // Join a game
-  public void joinGame(String authToken, int gameID, String playerColor) throws DataAccessException {
-
-    if (playerColor == null || playerColor.isEmpty()) {
-      throw new DataAccessException("Player color is required.");
-    }
-    if (authToken == null || authToken.isEmpty()) {
-      throw new DataAccessException("Auth token is required.");
-    }
-    if (gameID <= 0) {
-      throw new DataAccessException("Valid gameID is required.");
-    }
-
-    // Ensure the user is authenticated
+  public void joinGame(String authToken, int gameID, String color) throws DataAccessException {
     AuthData auth = authDAO.getAuth(authToken);
     if (auth == null) {
-      throw new DataAccessException("Unauthorized.");
+      throw new DataAccessException("Unauthorized: Invalid auth token.");
     }
 
-    // Retrieve the game
-    GameData game = gameDAO.getGame(gameID);
+    GameData gameData = gameDAO.getGame(gameID);
+    if (gameData == null) {
+      throw new DataAccessException("Game not found.");
+    }
 
-    // Add the player to the game (either as white or black)
-    if (playerColor.equalsIgnoreCase("WHITE")) {
-      if (game.whiteUsername() != null) {
-        throw new DataAccessException("White player spot already taken.");
+    String username = auth.username();
+
+    if (color.equalsIgnoreCase("white")) {
+      if (gameData.whiteUsername() != null && !gameData.whiteUsername().isEmpty()) {
+        throw new DataAccessException("Forbidden: White spot already taken.");
       }
-      game = new GameData(game.gameID(), auth.username(), game.blackUsername(), game.gameName());
-    } else if (playerColor.equalsIgnoreCase("BLACK")) {
-      if (game.blackUsername() != null) {
-        throw new DataAccessException("Black player spot already taken.");
+      gameDAO.updateGame(gameID, username, gameData.blackUsername());
+    } else if (color.equalsIgnoreCase("black")) {
+      if (gameData.blackUsername() != null && !gameData.blackUsername().isEmpty()) {
+        throw new DataAccessException("Forbidden: Black spot already taken.");
       }
-      game = new GameData(game.gameID(), game.whiteUsername(), auth.username(), game.gameName());
+      gameDAO.updateGame(gameID, gameData.whiteUsername(), username);
     } else {
-      throw new DataAccessException("Invalid player color.");
+      throw new DataAccessException("Invalid color specified.");
     }
-
-    // Update the game
-    gameDAO.updateGame(game);
   }
+
+
 }
