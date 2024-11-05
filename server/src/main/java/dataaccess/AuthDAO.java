@@ -49,7 +49,7 @@ public class AuthDAO {
       try (ResultSet rs = stmt.executeQuery()) {
         if (rs.next()) {
           String username = rs.getString("username");
-          return new AuthData(username, authToken); // Found auth token
+          return new AuthData(authToken, username); // Found auth token
         } else {
           return null; // Auth token not found
         }
