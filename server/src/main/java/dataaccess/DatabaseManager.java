@@ -8,7 +8,6 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class DatabaseManager {
     private static final String DATABASE_NAME;
@@ -34,15 +33,7 @@ public class DatabaseManager {
 
             CONNECTION_URL = String.format("jdbc:mysql://%s:%d/%s", host, port, DATABASE_NAME);
 
-            // HikariCP configuration
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(CONNECTION_URL);
-            config.setUsername(USER);
-            config.setPassword(PASSWORD);
-            config.setMaximumPoolSize(10); // adjust as needed
-            config.setAutoCommit(false);
 
-            dataSource = new HikariDataSource(config);
         } catch (Exception ex) {
             throw new RuntimeException("Unable to configure database connection pool: " + ex.getMessage());
         }

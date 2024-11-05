@@ -5,7 +5,6 @@ import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.AuthData;
-import model.UserData;
 
 import java.util.List;
 
