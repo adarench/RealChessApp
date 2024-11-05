@@ -86,10 +86,6 @@ public class GameHandler{
       return gson.toJson(new ErrorResponse("Error: " + e.getMessage()));
     }
   };
-
-  //join game case PUT
-  // In GameHandler.java - Update joinGame to validate the auth token and ensure spot availability
-  // In GameHandler.java - Refine joinGame to fit existing structure
   public Route joinGame = (Request req, Response res) -> {
     res.type("application/json");
 
