@@ -33,12 +33,12 @@ public class DatabaseManager {
 
             CONNECTION_URL = String.format("jdbc:mysql://%s:%d/%s", host, port, DATABASE_NAME);
 
-            // HikariCP configuration
+            // pooling
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl(CONNECTION_URL);
             config.setUsername(USER);
             config.setPassword(PASSWORD);
-            config.setMaximumPoolSize(10); // adjust as needed
+            config.setMaximumPoolSize(10);
             config.setAutoCommit(false);
 
             dataSource = new HikariDataSource(config);
@@ -49,7 +49,7 @@ public class DatabaseManager {
     }
 
     public static Connection getConnection() throws SQLException {
-        return dataSource.getConnection();  // Connection is pooled via HikariCP
+        return dataSource.getConnection();
     }
 
     public static void initializeDatabase() throws DataAccessException {
