@@ -126,7 +126,7 @@ public class GameDAO {
     } catch (SQLException e) {
       throw new DataAccessException("Error listing games: " + e.getMessage());
     }
-    return games; // Returns empty if no games are found
+    return games;
   }
 
 

@@ -2,30 +2,18 @@ package dataaccess;
 
 import model.UserData;
 
-// SQL and database imports
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-// Custom exception class for handling data access exceptions
-import dataaccess.DataAccessException;
-
-// Model class for authentication data
-
-// BCrypt library for password hashing and verification
 import org.mindrot.jbcrypt.BCrypt;
-import java.sql.ResultSet;
-
-//import java.util.HashMap;
-//import java.util.Map;
 
 public class UserDAO {
 
 
   public void createUser(UserData user) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
+      conn.setAutoCommit(false);
 
       String sql = "INSERT INTO Users (username, password, email) VALUES (?, ?, ?)";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -35,7 +23,7 @@ public class UserDAO {
         stmt.executeUpdate();
       }
 
-      conn.commit(); // Commit the transaction
+      conn.commit();
 
     } catch (SQLException e) {
       throw new DataAccessException("Error creating user: " + e.getMessage());
@@ -60,7 +48,7 @@ public class UserDAO {
     } catch (SQLException e) {
       throw new DataAccessException("Error retrieving user: " + e.getMessage());
     }
-    return null; // User not found
+    return null;
   }
 
 
@@ -68,7 +56,7 @@ public class UserDAO {
 
   public void clearAllUsers() throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
+      conn.setAutoCommit(false);
 
       String sql = "DELETE FROM Users";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
