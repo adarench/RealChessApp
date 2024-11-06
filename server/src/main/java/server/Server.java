@@ -9,7 +9,7 @@ import service.DatabaseService;
 import dataaccess.UserDAO;
 import dataaccess.GameDAO;
 import dataaccess.AuthDAO;
-import dataaccess.DatabaseManager; // Import DatabaseManager for initialization
+import dataaccess.DatabaseManager;
 import spark.Spark;
 
 import static spark.Spark.*;
@@ -21,11 +21,10 @@ public class Server {
       DatabaseManager.initializeDatabase();
     } catch (Exception e) {
       e.printStackTrace();
-      System.exit(1); // Exit if database initialization fails
+      System.exit(1);
     }
 
-    // Set the port for the Spark server
-    port(port); // You can change this port as needed
+    port(port);
     staticFiles.location("/web");
 
     // Initialize DAOs (data access objects)
@@ -44,22 +43,19 @@ public class Server {
     DatabaseHandler databaseHandler = new DatabaseHandler(databaseService);
 
     // Routes
-    post("/user", userHandler.register);        // register
-    post("/session", userHandler.login);        // login
-    delete("/session", userHandler.logout);     // logout
+    post("/user", userHandler.register);
+    post("/session", userHandler.login);
+    delete("/session", userHandler.logout);
 
     // Routes for game operations
-    post("/game", gameHandler.createGame);      // new game
-    get("/game", gameHandler.listGames);        // list games
-    put("/game", gameHandler.joinGame);         // join game
+    post("/game", gameHandler.createGame);
+    get("/game", gameHandler.listGames);
+    put("/game", gameHandler.joinGame);
 
-    // Route for clearing the database
-    delete("/db", databaseHandler.clearDatabase); // clear db
+    delete("/db", databaseHandler.clearDatabase);
 
-    // Add a shutdown hook to close the connection pool on server shutdown
     Runtime.getRuntime().addShutdownHook(new Thread(DatabaseManager::close));
 
-    // Spark will listen on port
     awaitInitialization();
     return port();
   }
