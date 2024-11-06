@@ -19,7 +19,7 @@ public class AuthDAO {
         stmt.executeUpdate();
       }
 
-      conn.commit(); // Commit the transaction
+      conn.commit();
 
     } catch (SQLException e) {
       throw new DataAccessException("Error creating auth token: " + e.getMessage());
@@ -36,9 +36,9 @@ public class AuthDAO {
       try (ResultSet rs = stmt.executeQuery()) {
         if (rs.next()) {
           String username = rs.getString("username");
-          return new AuthData(authToken, username); // Found auth token
+          return new AuthData(authToken, username);
         } else {
-          return null; // Auth token not found
+          return null;
         }
       }
     } catch (SQLException e) {
@@ -49,7 +49,7 @@ public class AuthDAO {
 
   public void deleteAuth(String authToken) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
+      conn.setAutoCommit(false);
 
       String sql = "DELETE FROM AuthTokens WHERE authToken = ?";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -60,7 +60,7 @@ public class AuthDAO {
         }
       }
 
-      conn.commit(); // Commit the transaction
+      conn.commit();
 
     } catch (SQLException e) {
       throw new DataAccessException("Error deleting auth token: " + e.getMessage());
@@ -72,14 +72,14 @@ public class AuthDAO {
 
   public void clearAllAuthTokens() throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
+      conn.setAutoCommit(false);
 
       String sql = "DELETE FROM AuthTokens";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.executeUpdate();
       }
 
-      conn.commit(); // Commit the transaction
+      conn.commit();
 
     } catch (SQLException e) {
       throw new DataAccessException("Error clearing auth tokens: " + e.getMessage());

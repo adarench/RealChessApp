@@ -13,7 +13,7 @@ public class GameDAO {
 
   public GameData createGame(String gameName) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
+      conn.setAutoCommit(false);
 
       String sql = "INSERT INTO Games (gameName) VALUES (?)";
       try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -23,7 +23,7 @@ public class GameDAO {
         try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
           if (generatedKeys.next()) {
             int gameId = generatedKeys.getInt(1);
-            conn.commit(); // Commit the transaction
+            conn.commit();
 
             // Return the created game
             return new GameData(gameId, null, null, gameName);
@@ -32,7 +32,7 @@ public class GameDAO {
           }
         }
       } catch (SQLException e) {
-        conn.rollback(); // Roll back on error
+        conn.rollback();
         throw new DataAccessException("Error creating game: " + e.getMessage());
       }
     } catch (SQLException e) {
@@ -53,7 +53,7 @@ public class GameDAO {
           String blackUsername = rs.getString("blackUsername");
           return new GameData(gameID, whiteUsername, blackUsername, gameName);
         } else {
-          return null; // Game not found
+          return null;
         }
       }
     } catch (SQLException e) {
@@ -64,7 +64,7 @@ public class GameDAO {
 
   public void updateGame(int gameID, String whiteUsername, String blackUsername) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
+      conn.setAutoCommit(false);
 
       String sql = "UPDATE Games SET whiteUsername = ?, blackUsername = ? WHERE game_id = ?";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -77,9 +77,9 @@ public class GameDAO {
           throw new DataAccessException("Game not found for update.");
         }
 
-        conn.commit(); // Commit transaction
+        conn.commit();
       } catch (SQLException e) {
-        conn.rollback(); // Rollback on error
+        conn.rollback();
         throw new DataAccessException("Error updating game: " + e.getMessage());
       }
     } catch (SQLException e) {
@@ -89,14 +89,14 @@ public class GameDAO {
 
 
 
-  // In GameDAO.java - Ensure clearAllGames clears all game data and auth tokens
+
   public void clearAllGames() throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
       conn.setAutoCommit(false); // Start transaction
       try (Statement stmt = conn.createStatement()) {
         stmt.executeUpdate("DELETE FROM Games");
         stmt.executeUpdate("DELETE FROM Users");
-        stmt.executeUpdate("DELETE FROM AuthTokens"); // Clear auth tokens
+        stmt.executeUpdate("DELETE FROM AuthTokens");
         conn.commit();
       } catch (SQLException e) {
         conn.rollback();
@@ -107,9 +107,6 @@ public class GameDAO {
     }
   }
 
-
-  // In GameDAO.java - Update listGames to ensure an empty list is returned if no games are found
-  // In GameDAO.java - Update listGames to consistently return an empty list if no games are present
   public List<GameData> listGames() throws DataAccessException {
     List<GameData> games = new ArrayList<>();
     String sql = "SELECT * FROM Games";
