@@ -43,7 +43,7 @@ public class GameDAO {
 
   public GameData getGame(int gameID) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection();
-         PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Games WHERE game_id = ?")) {
+         PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Games WHERE gameID = ?")) {
 
       stmt.setInt(1, gameID);
       try (ResultSet rs = stmt.executeQuery()) {
@@ -66,7 +66,7 @@ public class GameDAO {
     try (Connection conn = DatabaseManager.getConnection()) {
       conn.setAutoCommit(false);
 
-      String sql = "UPDATE Games SET whiteUsername = ?, blackUsername = ? WHERE game_id = ?";
+      String sql = "UPDATE Games SET whiteUsername = ?, blackUsername = ? WHERE gameID = ?";
       try (PreparedStatement stmt = conn.prepareStatement(sql)) {
         stmt.setString(1, whiteUsername);
         stmt.setString(2, blackUsername);
@@ -115,7 +115,7 @@ public class GameDAO {
          ResultSet rs = stmt.executeQuery()) {
 
       while (rs.next()) {
-        int gameID = rs.getInt("game_id");
+        int gameID = rs.getInt("gameID");
         String gameName = rs.getString("gameName");
         String whiteUsername = rs.getString("whiteUsername");
         String blackUsername = rs.getString("blackUsername");

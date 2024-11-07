@@ -149,9 +149,16 @@ public class DAOTest {
     assertNull(retrievedGame);
   }
 
-  @Test
   public void testUpdateGamePositive() throws DataAccessException {
+    // Create user entries in the Users table for the foreign key constraint
+    UserDAO userDAO = new UserDAO();
+    userDAO.createUser(new UserData("user1", "password1", "user1@example.com"));
+    userDAO.createUser(new UserData("user2", "password2", "user2@example.com"));
+
+    // Create a new game
     GameData gameData = gameDAO.createGame("Chess Game");
+
+    // Update the game with existing users
     gameDAO.updateGame(gameData.gameID(), "user1", "user2");
 
     // Verify game update
@@ -159,6 +166,7 @@ public class DAOTest {
     assertEquals("user1", updatedGame.whiteUsername());
     assertEquals("user2", updatedGame.blackUsername());
   }
+
 
   @Test
   public void testUpdateGameNegative() {
