@@ -15,8 +15,6 @@ public class DatabaseManager {
     private static final String PASSWORD;
     private static final String CONNECTION_URL;
 
-    private static HikariDataSource dataSource;
-
     static {
         try {
             var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties");
@@ -33,23 +31,19 @@ public class DatabaseManager {
 
             CONNECTION_URL = String.format("jdbc:mysql://%s:%d/%s", host, port, DATABASE_NAME);
 
-            // pooling
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(CONNECTION_URL);
-            config.setUsername(USER);
-            config.setPassword(PASSWORD);
-            config.setMaximumPoolSize(10);
-            config.setAutoCommit(false);
-
-            dataSource = new HikariDataSource(config);
-
         } catch (Exception ex) {
             throw new RuntimeException("Unable to configure database connection pool: " + ex.getMessage());
         }
     }
 
-    public static Connection getConnection() throws SQLException {
-        return dataSource.getConnection();
+    public static Connection getConnection() throws DataAccessException {
+        try {
+            var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
+            conn.setCatalog(DATABASE_NAME);
+            return conn;
+        } catch (SQLException e) {
+            throw new DataAccessException("Error obtaining database connection: " + e.getMessage());
+        }
     }
 
     public static void initializeDatabase() throws DataAccessException {
@@ -70,6 +64,7 @@ public class DatabaseManager {
 
     public static void createTables() throws DataAccessException {
         try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
             try (Statement stmt = conn.createStatement()) {
 
                 // Create Users Table
@@ -107,12 +102,6 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             throw new DataAccessException("Error creating tables: " + e.getMessage());
-        }
-    }
-
-    public static void close() {
-        if (dataSource != null) {
-            dataSource.close();
         }
     }
 }

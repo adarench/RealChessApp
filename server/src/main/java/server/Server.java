@@ -54,8 +54,6 @@ public class Server {
 
     delete("/db", databaseHandler.clearDatabase);
 
-    Runtime.getRuntime().addShutdownHook(new Thread(DatabaseManager::close));
-
     awaitInitialization();
     return port();
   }
