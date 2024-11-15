@@ -7,7 +7,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import model.AuthData;
 
@@ -18,9 +17,9 @@ public class ServerFacade {
   private final Gson gson = new Gson();
 
   // Registers a new user
-  // Registers a new user
   public String register(String username, String password, String email) {
-    String jsonInputString = String.format("{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\"}",
+    String jsonInputString = String.format(
+            "{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\"}",
             username, password, email);
     String response = sendPostRequest("/user", jsonInputString);
 
@@ -38,7 +37,6 @@ public class ServerFacade {
     }
   }
 
-
   // Logs in an existing user and stores the auth token on success
   public String login(String username, String password) {
     String jsonInputString = String.format("{\"username\":\"%s\",\"password\":\"%s\"}", username, password);
@@ -51,7 +49,7 @@ public class ServerFacade {
     // Parse the JSON response to get the auth token
     try {
       AuthData authData = gson.fromJson(response, AuthData.class);
-      this.authToken = authData.authToken();  // Assuming `AuthData` has a `getToken()` method
+      this.authToken = authData.authToken();
       return "Login successful";
     } catch (Exception e) {
       return "Error parsing auth data";

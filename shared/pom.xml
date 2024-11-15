@@ -44,7 +44,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        Main
+                                        ChessDemo
                                     </mainClass>
                                 </manifest>
                             </archive>

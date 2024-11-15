@@ -1,8 +1,9 @@
 package ui;
 
 import java.util.Scanner;
-
 public class Main {
+
+  private static final ServerFacade serverFacade = new ServerFacade();
 
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
@@ -47,18 +48,53 @@ public class Main {
     System.out.println("  quit    - Exit the application");
   }
 
-  // Placeholder for login functionality
+  /// Implement login functionality
   private static void login() {
-    System.out.println("Login functionality will go here.");
-    // Once implemented, this will call ServerFacade to handle login
-    // If login is successful, set isLoggedIn to true and transition to the post-login menu
+    System.out.print("Enter username: ");
+    String username = scanner.nextLine().trim();
+
+    System.out.print("Enter password: ");
+    String password = scanner.nextLine().trim();
+
+    if (username.isEmpty() || password.isEmpty()) {
+      System.out.println("Error: Username and password are required.");
+      return;
+    }
+
+    // Call ServerFacade to log in
+    String response = serverFacade.login(username, password);
+    System.out.println(response);
+
+    if (response.contains("Login successful")) {
+      isLoggedIn = true; // Update login status
+      // Transition to post-login menu (to be implemented later)
+    }
   }
 
-  // Placeholder for register functionality
+  // Implement register functionality
   private static void register() {
-    System.out.println("Register functionality will go here.");
-    // Once implemented, this will call ServerFacade to handle registration
-    // If registration is successful, set isLoggedIn to true and transition to the post-login menu
+    System.out.print("Enter username: ");
+    String username = scanner.nextLine().trim();
+
+    System.out.print("Enter password: ");
+    String password = scanner.nextLine().trim();
+
+    System.out.print("Enter email: ");
+    String email = scanner.nextLine().trim();
+
+    if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+      System.out.println("Error: All fields are required.");
+      return;
+    }
+
+    // Call ServerFacade to register
+    String response = serverFacade.register(username, password, email);
+    System.out.println(response);
+
+    if (response.contains("Registration successful")) {
+      isLoggedIn = true; // Update login status
+      // Transition to post-login menu (to be implemented later)
+    }
   }
 
   // Quit the application
