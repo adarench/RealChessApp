@@ -43,9 +43,6 @@ public class ServerFacadeTests {
     }
 
 
-
-
-
     @Test
     public void testRegister_Failure() {
         String response = facade.register("", "password123", "newuser@example.com"); // Missing username
@@ -60,6 +57,14 @@ public class ServerFacadeTests {
         Assertions.assertNotNull(response, "Login response should not be null");
         Assertions.assertTrue(response.contains("success") || response.contains("token"),
                 "Login response should contain a success indication or token");
+    }
+
+    @Test
+    public void testLogin_Failure() {
+        String response = facade.login("nonexistentuser", "wrongpassword");
+        Assertions.assertNotNull(response, "Login response should not be null");
+        Assertions.assertTrue(response.contains("Error"),
+                "Login response should indicate an error for invalid credentials");
     }
 
     @Test
