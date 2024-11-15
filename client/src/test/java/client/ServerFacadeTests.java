@@ -29,13 +29,20 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testRegister() {
+    public void testRegister_Success() {
         String response = facade.register("newuser", "password123", "newuser@example.com");
-        System.out.println("Register response: " + response); // Debugging line
         Assertions.assertNotNull(response, "Register response should not be null");
-        Assertions.assertTrue(response.contains("Registration successful"), "Register response should indicate success");
+        Assertions.assertTrue(response.contains("Registration successful"),
+                "Register response should indicate success");
     }
 
+    @Test
+    public void testRegister_Failure() {
+        String response = facade.register("", "password123", "newuser@example.com"); // Missing username
+        Assertions.assertNotNull(response, "Register response should not be null");
+        Assertions.assertTrue(response.contains("Error"),
+                "Register response should indicate an error for invalid input");
+    }
 
     @Test
     public void testLogin() {
