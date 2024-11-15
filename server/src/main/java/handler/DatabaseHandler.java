@@ -15,7 +15,7 @@ public class DatabaseHandler{
     this.databaseService = databaseService;
   }
 
-  //clearing database DELETE
+  //clear database DELETE
   public Route clearDatabase = (Request req, Response res) -> {
     res.type("application/json");
 
