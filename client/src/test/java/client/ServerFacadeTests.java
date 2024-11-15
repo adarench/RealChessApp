@@ -86,6 +86,24 @@ public class ServerFacadeTests {
     }
 
     @Test
+    public void testCreateGame_Success() {
+        facade.register("gamecreator", "password123", "gamecreator@example.com");
+        facade.login("gamecreator", "password123");
+        String response = facade.createGame("Test Game");
+        Assertions.assertNotNull(response, "CreateGame response should not be null");
+        Assertions.assertTrue(response.contains("Game created successfully"),
+                "CreateGame response should indicate success");
+    }
+
+    @Test
+    public void testCreateGame_Failure() {
+        String response = facade.createGame(""); // Missing game name
+        Assertions.assertNotNull(response, "CreateGame response should not be null");
+        Assertions.assertTrue(response.contains("Error"),
+                "CreateGame response should indicate an error for invalid input");
+    }
+
+    @Test
     public void sampleTest() {
         Assertions.assertTrue(true);
     }
