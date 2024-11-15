@@ -24,7 +24,7 @@ public class ServerFacadeTests {
     public static void init() {
         // Start the server
         server = new Server();
-        var port = server.run(8080);  // Set to your specific port (3306)
+        var port = server.run(0);  // Set to your specific port (3306)
         System.out.println("Started test HTTP server on port " + port);
 
         // Initialize ServerFacade
