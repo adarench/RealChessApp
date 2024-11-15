@@ -68,6 +68,24 @@ public class ServerFacadeTests {
     }
 
     @Test
+    public void testLogout_Success() {
+        facade.register("logoutuser", "password123", "logoutuser@example.com");
+        facade.login("logoutuser", "password123");
+        String response = facade.logout();
+        Assertions.assertNotNull(response, "Logout response should not be null");
+        Assertions.assertTrue(response.contains("Logout successful"),
+                "Logout response should indicate success");
+    }
+
+    @Test
+    public void testLogout_Failure() {
+        String response = facade.logout(); // No user logged in
+        Assertions.assertNotNull(response, "Logout response should not be null");
+        Assertions.assertTrue(response.contains("Error"),
+                "Logout response should indicate an error when no user is logged in");
+    }
+
+    @Test
     public void sampleTest() {
         Assertions.assertTrue(true);
     }
