@@ -156,8 +156,12 @@ public class Main {
       return;
     }
 
-    String response = serverFacade.playGame(gameID, color);
+    String response = serverFacade.playGame(gameID,color);
     System.out.println(response);
+
+    if (response.contains("Successfully joined")) {
+      drawChessBoard(color.equals("white"));
+    }
   }
   private static void observeGame() {
     System.out.print("Enter the game ID to observe: ");
@@ -172,6 +176,9 @@ public class Main {
 
     String response = serverFacade.observeGame(gameID);
     System.out.println(response);
+
+    drawChessBoard(true);
+    drawChessBoard(false);
   }
 
 
@@ -221,6 +228,41 @@ public class Main {
     System.out.println("  playgame    - Join a game to play");
     System.out.println("  observegame - Observe an existing game");
     System.out.println("  logout      - Log out and return to the prelogin menu");
+  }
+  private static void drawChessBoard(boolean whiteAtBottom) {
+    // Pieces in starting positions
+    String[][] board = {
+            {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"},
+            {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"},
+            {" ", " ", " ", " ", " ", " ", " ", " "},
+            {" ", " ", " ", " ", " ", " ", " ", " "},
+            {" ", " ", " ", " ", " ", " ", " ", " "},
+            {" ", " ", " ", " ", " ", " ", " ", " "},
+            {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"},
+            {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"}
+    };
+
+    // Flip board for black perspective
+    if (!whiteAtBottom) {
+      for (int i = 0; i < board.length / 2; i++) {
+        String[] temp = board[i];
+        board[i] = board[board.length - 1 - i];
+        board[board.length - 1 - i] = temp;
+      }
+    }
+
+    // Draw the board with alternating colors
+    System.out.println("  a b c d e f g h");
+    for (int row = 0; row < 8; row++) {
+      System.out.print((whiteAtBottom ? 8 - row : row + 1) + " ");
+      for (int col = 0; col < 8; col++) {
+        boolean isLightSquare = (row + col) % 2 == 0;
+        String squareColor = isLightSquare ? "\u001B[47m" : "\u001B[40m"; // White or Black background
+        String reset = "\u001B[0m"; // Reset colors
+        System.out.print(squareColor + board[row][col] + " " + reset);
+      }
+      System.out.println();
+    }
   }
 
 
