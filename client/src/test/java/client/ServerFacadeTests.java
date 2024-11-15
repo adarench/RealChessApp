@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import ui.ServerFacade;
 import server.Server;
+import model.AuthData;
+import com.google.gson.Gson;
 
 public class ServerFacadeTests {
 
@@ -29,12 +31,20 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testRegister_Success() {
-        String response = facade.register("newuser", "password123", "newuser@example.com");
+    public void testRegisterSuccess() {
+        // Generate a unique username for testing
+        String uniqueUsername = "testuser" + System.currentTimeMillis();
+        String response = facade.register(uniqueUsername, "password123", uniqueUsername + "@example.com");
+
+        // Assert that the response contains the success message with the username
         Assertions.assertNotNull(response, "Register response should not be null");
-        Assertions.assertTrue(response.contains("Registration successful"),
-                "Register response should indicate success");
+        Assertions.assertTrue(response.contains("Registration successful for user: " + uniqueUsername),
+                "Register response should indicate success with the correct username");
     }
+
+
+
+
 
     @Test
     public void testRegister_Failure() {
