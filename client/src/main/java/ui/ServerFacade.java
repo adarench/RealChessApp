@@ -8,6 +8,9 @@ import java.net.URL;
 
 import com.google.gson.Gson;
 
+
+
+
 import model.AuthData;
 
 public class ServerFacade {
@@ -30,6 +33,7 @@ public class ServerFacade {
     // Parse the JSON response to confirm registration success
     try {
       AuthData authData = gson.fromJson(response, AuthData.class);
+      this.authToken = authData.authToken();
       return "Registration successful for user: " + authData.username();
     } catch (Exception e) {
       e.printStackTrace();
@@ -114,6 +118,7 @@ public class ServerFacade {
     }
   }
   public String listGames() {
+
     try {
       URL url = new URL(SERVER_URL + "/game");
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -142,6 +147,7 @@ public class ServerFacade {
   }
 
   public String playGame(int gameID, String playerColor) {
+
     String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
 
     try {

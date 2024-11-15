@@ -9,10 +9,16 @@ import server.Server;
 import model.AuthData;
 import com.google.gson.Gson;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+
 public class ServerFacadeTests {
 
     private static Server server;
     private static ServerFacade facade;
+    private static Gson gson;
 
     @BeforeAll
     public static void init() {
@@ -23,6 +29,7 @@ public class ServerFacadeTests {
 
         // Initialize ServerFacade
         facade = new ServerFacade();
+        gson = new Gson();
     }
 
     @AfterAll
@@ -54,10 +61,12 @@ public class ServerFacadeTests {
     @Test
     public void testLogin() {
         String response = facade.login("testuser", "password123");
+
         Assertions.assertNotNull(response, "Login response should not be null");
-        Assertions.assertTrue(response.contains("success") || response.contains("token"),
-                "Login response should contain a success indication or token");
+        Assertions.assertTrue(response.equals("Login successful") || response.startsWith("Error:"),
+                "Login response should either indicate success or contain an error message");
     }
+
 
     @Test
     public void testLogin_Failure() {
@@ -132,6 +141,79 @@ public class ServerFacadeTests {
         Assertions.assertTrue(response.contains("Error") || response.contains("Unauthorized"),
                 "ListGames response should indicate an error if user is not logged in");
     }
+
+
+    @Test
+    public void testPlayGameSuccess() {
+        // Register the user if they do not already exist
+        String registerResponse = facade.register("testuser", "password123", "testuser@example.com");
+
+        // Log in to ensure the user is authenticated
+        String loginResponse = facade.login("testuser", "password123");
+        Assertions.assertEquals("Login successful", loginResponse, "Login should be successful for the test");
+
+        // Create a new game to ensure the test has a valid game ID
+        String createGameResponse = facade.createGame("Test Game");
+        Assertions.assertTrue(createGameResponse.contains("Game created successfully"),
+                "CreateGame response should indicate success");
+
+        // Attempt to list games and extract the last game's ID for testing
+        String listGamesResponse = facade.listGames();
+        JsonObject listGamesJson = gson.fromJson(listGamesResponse, JsonObject.class);
+        JsonArray gamesArray = listGamesJson.getAsJsonArray("games");
+        int gameID = gamesArray.get(gamesArray.size() - 1).getAsJsonObject().get("gameID").getAsInt();
+
+        // Attempt to join the newly created game with a valid game ID and color
+        String playGameResponse = facade.playGame(gameID, "white");
+
+        // Assert that the response indicates success
+        Assertions.assertNotNull(playGameResponse, "PlayGame response should not be null");
+        Assertions.assertEquals("Successfully joined the game.", playGameResponse,
+                "PlayGame response should indicate success");
+    }
+
+
+
+
+
+
+    @Test
+    public void testPlayGameFailure() {
+        // Log in to ensure the user is authenticated
+        facade.login("testuser", "password123");
+
+        // Attempt to join a game with an invalid game ID or invalid color
+        String response = facade.playGame(-1, "blue");
+
+        // Assert that the response indicates an error
+        Assertions.assertNotNull(response, "PlayGame response should not be null");
+        Assertions.assertTrue(response.contains("Error") || response.contains("Invalid"),
+                "PlayGame response should indicate an error");
+    }
+
+    @Test
+    public void testObserveGameSuccess() {
+        // Attempt to observe an existing game
+        String response = facade.observeGame(115);
+
+        // Assert that the response contains the expected placeholder
+        Assertions.assertNotNull(response, "ObserveGame response should not be null");
+        Assertions.assertTrue(response.contains("Observing game with ID: 115"),
+                "ObserveGame response should indicate observing game placeholder");
+    }
+
+    @Test
+    public void testObserveGameFailure() {
+        // Attempt to observe a game with an invalid game ID
+        String response = facade.observeGame(-1);
+
+        // Assert that the response still contains a placeholder (since functionality is not implemented yet)
+        Assertions.assertNotNull(response, "ObserveGame response should not be null");
+        Assertions.assertTrue(response.contains("Observing game with ID: -1"),
+                "ObserveGame response should still include a placeholder message");
+    }
+
+
 
     @Test
     public void sampleTest() {

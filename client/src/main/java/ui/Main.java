@@ -149,18 +149,20 @@ public class Main {
     }
 
     System.out.print("Enter the color you want to play (white/black): ");
-    String color = scanner.nextLine().trim().toLowerCase();
+    String playerColor = scanner.nextLine().trim().toLowerCase();
 
-    if (!color.equals("white") && !color.equals("black")) {
+    if (!playerColor.equals("white") && !playerColor.equals("black")) {
       System.out.println("Error: Invalid color. Choose 'white' or 'black'.");
       return;
     }
 
-    String response = serverFacade.playGame(gameID,color);
+    String response = serverFacade.playGame(gameID,playerColor);
     System.out.println(response);
 
     if (response.contains("Successfully joined")) {
-      drawChessBoard(color.equals("white"));
+      drawChessBoard(playerColor.equals("white"));
+    }else if (response.contains("Game is already full")) {
+      System.out.println("Error: Unable to join. The game is already full.");
     }
   }
   private static void observeGame() {
