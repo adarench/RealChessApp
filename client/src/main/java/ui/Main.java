@@ -158,12 +158,23 @@ public class Main {
         case "creategame":
           createGame();
           break;
-
+        case "playgame":
+          // Placeholder for playgame logic
+          System.out.println("PlayGame functionality not implemented yet.");
+          break;
+        case "observegame":
+          // Placeholder for observegame logic
+          System.out.println("ObserveGame functionality not implemented yet.");
+          break;
+        case "logout":
+          logout();
+          return; // Exit to prelogin menu
         default:
           System.out.println("Invalid command. Type 'help' for a list of commands.");
       }
     }
   }
+
 
   // Display help text for postlogin commands
   private static void showPostloginHelp() {
