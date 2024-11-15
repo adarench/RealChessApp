@@ -104,6 +104,36 @@ public class ServerFacadeTests {
     }
 
     @Test
+    public void testListGamesSuccess() {
+        // Log in to ensure the user is authenticated
+        facade.login("testuser", "password123");
+
+        // Call listGames and capture the response
+        String response = facade.listGames();
+
+        // Assert that the response is not null
+        Assertions.assertNotNull(response, "ListGames response should not be null");
+
+        // If there are no games, the response should indicate an empty list
+        Assertions.assertTrue(response.contains("\"games\":[]") || response.contains("["),
+                "ListGames response should return an empty list or a list of games");
+    }
+
+    @Test
+    public void testListGamesUnauthorized() {
+        // Make sure no user is logged in
+        facade.logout();
+
+        // Call listGames without being logged in
+        String response = facade.listGames();
+
+        // Assert that the response indicates an error (e.g., Unauthorized)
+        Assertions.assertNotNull(response, "ListGames response should not be null");
+        Assertions.assertTrue(response.contains("Error") || response.contains("Unauthorized"),
+                "ListGames response should indicate an error if user is not logged in");
+    }
+
+    @Test
     public void sampleTest() {
         Assertions.assertTrue(true);
     }
