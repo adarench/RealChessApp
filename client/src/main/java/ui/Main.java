@@ -68,8 +68,20 @@ public class Main {
     if (response.contains("Login successful")) {
       isLoggedIn = true; // Update login status
       // Transition to post-login menu (to be implemented later)
+      showPostloginMenu();
     }
   }
+  private static void logout() {
+    System.out.println("Logging out...");
+    String response = serverFacade.logout();
+    System.out.println(response);
+
+    if (response.contains("Logout successful")) {
+      isLoggedIn = false; // Reset login status
+      return; // Exit to prelogin menu
+    }
+  }
+
 
   // Implement register functionality
   private static void register() {
@@ -93,7 +105,7 @@ public class Main {
 
     if (response.contains("Registration successful")) {
       isLoggedIn = true; // Update login status
-      // Transition to post-login menu (to be implemented later)
+      showPostloginMenu();
     }
   }
 
@@ -103,5 +115,66 @@ public class Main {
     scanner.close(); // Close the scanner before exiting
   }
 
-  // Method to show the postlogin menu will be added later
+  private static void listGames() {
+    System.out.println("Fetching list of games...");
+    String response = serverFacade.listGames();
+    if (response.startsWith("Error:")) {
+      System.out.println(response); // Display error
+    } else {
+      System.out.println("Available Games:");
+      System.out.println(response); // Display the list of games
+    }
+  }
+  private static void createGame() {
+    System.out.print("Enter a name for the game: ");
+    String gameName = scanner.nextLine().trim();
+
+    if (gameName.isEmpty()) {
+      System.out.println("Error: Game name cannot be empty.");
+      return;
+    }
+
+    String response = serverFacade.createGame(gameName);
+    System.out.println(response);
+  }
+
+
+
+  private static void showPostloginMenu() {
+    while (true) {
+      System.out.println("\n== Chess Client (Postlogin) ==");
+      System.out.println("Enter a command: help, listgames, creategame, playgame, observegame, logout");
+      System.out.print("> ");
+
+      String command = scanner.nextLine().trim().toLowerCase();
+
+      switch (command) {
+        case "help":
+          showPostloginHelp();
+          break;
+        case "listgames":
+          listGames();
+          break;
+        case "creategame":
+          createGame();
+          break;
+
+        default:
+          System.out.println("Invalid command. Type 'help' for a list of commands.");
+      }
+    }
+  }
+
+  // Display help text for postlogin commands
+  private static void showPostloginHelp() {
+    System.out.println("Commands:");
+    System.out.println("  help        - Display available commands");
+    System.out.println("  listgames   - List all available games");
+    System.out.println("  creategame  - Create a new game");
+    System.out.println("  playgame    - Join a game to play");
+    System.out.println("  observegame - Observe an existing game");
+    System.out.println("  logout      - Log out and return to the prelogin menu");
+  }
+
+
 }

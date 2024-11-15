@@ -83,6 +83,65 @@ public class ServerFacade {
     }
   }
 
+
+  public String createGame(String gameName) {
+    String jsonInputString = String.format("{\"gameName\":\"%s\"}", gameName);
+
+
+    try {
+      URL url = new URL(SERVER_URL + "/game");
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("Authorization", authToken);
+      connection.setRequestProperty("Content-Type", "application/json");
+      connection.setDoOutput(true);
+
+      try (OutputStream os = connection.getOutputStream()) {
+        byte[] input = jsonInputString.getBytes("utf-8");
+        os.write(input, 0, input.length);
+      }
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        return "Game created successfully.";
+      } else {
+        return "Error: Unable to create game. Server returned HTTP code " + responseCode;
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Error: " + e.getMessage();
+    }
+  }
+  public String listGames() {
+    try {
+      URL url = new URL(SERVER_URL + "/game");
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("Authorization", authToken);
+      connection.setRequestProperty("Content-Type", "application/json");
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
+        StringBuilder response = new StringBuilder();
+        String responseLine;
+        while ((responseLine = in.readLine()) != null) {
+          response.append(responseLine.trim());
+        }
+        in.close();
+        return response.toString(); // Return the list of games
+      } else {
+        return "Error: Unable to fetch games. Server returned HTTP code " + responseCode;
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Error: " + e.getMessage();
+    }
+  }
+
+
   // Helper method to send a POST request
   private String sendPostRequest(String endpoint, String jsonInputString) {
     try {
