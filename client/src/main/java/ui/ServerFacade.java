@@ -141,6 +141,41 @@ public class ServerFacade {
     }
   }
 
+  public String playGame(int gameID, String playerColor) {
+    String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
+
+    try {
+      URL url = new URL(SERVER_URL + "/game");
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("PUT");
+      connection.setRequestProperty("Authorization", authToken);
+      connection.setRequestProperty("Content-Type", "application/json");
+      connection.setDoOutput(true);
+
+      try (OutputStream os = connection.getOutputStream()) {
+        byte[] input = jsonInputString.getBytes("utf-8");
+        os.write(input, 0, input.length);
+      }
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        return "Successfully joined the game.";
+      } else {
+        return "Error: Unable to join the game. Server returned HTTP code " + responseCode;
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Error: " + e.getMessage();
+    }
+  }
+  public String observeGame(int gameID) {
+    // Placeholder: You can expand this later when observing is fully implemented
+    return "Observing game with ID: " + gameID + " (not yet implemented).";
+  }
+
+
+
 
   // Helper method to send a POST request
   private String sendPostRequest(String endpoint, String jsonInputString) {

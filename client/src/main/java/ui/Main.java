@@ -137,6 +137,42 @@ public class Main {
     String response = serverFacade.createGame(gameName);
     System.out.println(response);
   }
+  private static void playGame() {
+    System.out.print("Enter the game ID to join: ");
+    int gameID;
+
+    try {
+      gameID = Integer.parseInt(scanner.nextLine().trim());
+    } catch (NumberFormatException e) {
+      System.out.println("Error: Invalid game ID.");
+      return;
+    }
+
+    System.out.print("Enter the color you want to play (white/black): ");
+    String color = scanner.nextLine().trim().toLowerCase();
+
+    if (!color.equals("white") && !color.equals("black")) {
+      System.out.println("Error: Invalid color. Choose 'white' or 'black'.");
+      return;
+    }
+
+    String response = serverFacade.playGame(gameID, color);
+    System.out.println(response);
+  }
+  private static void observeGame() {
+    System.out.print("Enter the game ID to observe: ");
+    int gameID;
+
+    try {
+      gameID = Integer.parseInt(scanner.nextLine().trim());
+    } catch (NumberFormatException e) {
+      System.out.println("Error: Invalid game ID.");
+      return;
+    }
+
+    String response = serverFacade.observeGame(gameID);
+    System.out.println(response);
+  }
 
 
 
@@ -159,11 +195,11 @@ public class Main {
           createGame();
           break;
         case "playgame":
-          // Placeholder for playgame logic
+          playGame();
           System.out.println("PlayGame functionality not implemented yet.");
           break;
         case "observegame":
-          // Placeholder for observegame logic
+          observeGame();
           System.out.println("ObserveGame functionality not implemented yet.");
           break;
         case "logout":
