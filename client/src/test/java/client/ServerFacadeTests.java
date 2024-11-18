@@ -19,17 +19,19 @@ public class ServerFacadeTests {
     private static Server server;
     private static ServerFacade facade;
     private static Gson gson;
+    private static int port;
 
     @BeforeAll
     public static void init() {
         // Start the server
         server = new Server();
-        var port = server.run(0);  // Set to your specific port (3306)
+        var port = server.run(8080);  // Set to your specific port (3306)
         System.out.println("Started test HTTP server on port " + port);
 
         // Initialize ServerFacade
         facade = new ServerFacade();
         gson = new Gson();
+
     }
 
     @AfterAll
@@ -51,7 +53,7 @@ public class ServerFacadeTests {
 
 
     @Test
-    public void testRegister_Failure() {
+    public void testRegisterFailure() {
         String response = facade.register("", "password123", "newuser@example.com"); // Missing username
         Assertions.assertNotNull(response, "Register response should not be null");
         Assertions.assertTrue(response.contains("Error"),
@@ -69,7 +71,7 @@ public class ServerFacadeTests {
 
 
     @Test
-    public void testLogin_Failure() {
+    public void testLoginFailure() {
         String response = facade.login("nonexistentuser", "wrongpassword");
         Assertions.assertNotNull(response, "Login response should not be null");
         Assertions.assertTrue(response.contains("Error"),
@@ -77,7 +79,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testLogout_Success() {
+    public void testLogoutSuccess() {
         facade.register("logoutuser", "password123", "logoutuser@example.com");
         facade.login("logoutuser", "password123");
         String response = facade.logout();
@@ -95,7 +97,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testCreateGame_Success() {
+    public void testCreateGameSuccess() {
         facade.register("gamecreator", "password123", "gamecreator@example.com");
         facade.login("gamecreator", "password123");
         String response = facade.createGame("Test Game");

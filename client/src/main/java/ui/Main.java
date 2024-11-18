@@ -3,12 +3,14 @@ package ui;
 import java.util.Scanner;
 public class Main {
 
-  private static final ServerFacade serverFacade = new ServerFacade();
+  private static final ServerFacade SERVER_FACADE= new ServerFacade();
 
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
   public static void main(String[] args) {
+
+
     showPreloginMenu();
   }
 
@@ -62,7 +64,7 @@ public class Main {
     }
 
     // Call ServerFacade to log in
-    String response = serverFacade.login(username, password);
+    String response = SERVER_FACADE.login(username, password);
     System.out.println(response);
 
     if (response.contains("Login successful")) {
@@ -73,7 +75,7 @@ public class Main {
   }
   private static void logout() {
     System.out.println("Logging out...");
-    String response = serverFacade.logout();
+    String response = SERVER_FACADE.logout();
     System.out.println(response);
 
     if (response.contains("Logout successful")) {
@@ -100,7 +102,7 @@ public class Main {
     }
 
     // Call ServerFacade to register
-    String response = serverFacade.register(username, password, email);
+    String response = SERVER_FACADE.register(username, password, email);
     System.out.println(response);
 
     if (response.contains("Registration successful")) {
@@ -117,7 +119,7 @@ public class Main {
 
   private static void listGames() {
     System.out.println("Fetching list of games...");
-    String response = serverFacade.listGames();
+    String response = SERVER_FACADE.listGames();
     if (response.startsWith("Error:")) {
       System.out.println(response); // Display error
     } else {
@@ -134,7 +136,7 @@ public class Main {
       return;
     }
 
-    String response = serverFacade.createGame(gameName);
+    String response = SERVER_FACADE.createGame(gameName);
     System.out.println(response);
   }
   private static void playGame() {
@@ -156,7 +158,7 @@ public class Main {
       return;
     }
 
-    String response = serverFacade.playGame(gameID,playerColor);
+    String response = SERVER_FACADE.playGame(gameID,playerColor);
     System.out.println(response);
 
     if (response.contains("Successfully joined")) {
@@ -176,7 +178,7 @@ public class Main {
       return;
     }
 
-    String response = serverFacade.observeGame(gameID);
+    String response = SERVER_FACADE.observeGame(gameID);
     System.out.println(response);
 
     drawChessBoard(true);

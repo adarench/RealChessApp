@@ -19,8 +19,6 @@ public class ChessGame {
         this.board.resetBoard();
     }
 
-    //will use in future...deleted castling function
-
 
     private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
     ChessGame.TeamColor opponentColor = (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
@@ -238,10 +236,6 @@ public class ChessGame {
                 ChessPiece piece = board.getPiece(position);
 
                 if (piece != null && piece.getTeamColor() == opponentColor) {
-                    /* skip the opponent's king to avoid recursion
-                    if (piece.getPieceType() == ChessPiece.PieceType.KING) {
-                        continue;
-                    }*/
 
                     Collection<ChessMove> moves = piece.pieceMoves(board, position, this);
                     for (ChessMove move : moves) {

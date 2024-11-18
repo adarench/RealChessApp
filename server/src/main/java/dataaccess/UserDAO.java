@@ -70,24 +70,7 @@ public class UserDAO {
     }
   }
 
-  public void updateUser(UserData user) throws DataAccessException {
-    try (Connection conn = DatabaseManager.getConnection()) {
-      conn.setAutoCommit(false); // Start transaction
 
-      String sql = "UPDATE Users SET password = ?, email = ? WHERE username = ?";
-      try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-        stmt.setString(1, BCrypt.hashpw(user.password(), BCrypt.gensalt()));
-        stmt.setString(2, user.email());
-        stmt.setString(3, user.username());
-        stmt.executeUpdate();
-      }
-
-      conn.commit(); // Commit the transaction
-
-    } catch (SQLException e) {
-      throw new DataAccessException("Error updating user: " + e.getMessage());
-    }
-  }
 
   public void deleteUser(String username) throws DataAccessException {
     try (Connection conn = DatabaseManager.getConnection()) {
