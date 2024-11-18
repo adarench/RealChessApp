@@ -20,17 +20,18 @@ public class ServerFacadeTests {
 
     @BeforeAll
     public static void init() {
-        // Start the server
+        // Start the server and get the dynamic URL
         server = new Server();
-        var port = server.run(8080); // Let Spark choose an available port
-        System.out.println("Started test HTTP server on port " + port);
-
-        // Initialize ServerFacade with the dynamic server URL
-        String serverUrl = "http://localhost:" + port;
-        facade = new ServerFacade();
+        String serverUrl = startServer();
+        facade = new ServerFacade(serverUrl);
         gson = new Gson();
     }
 
+    private static String startServer() {
+        int port = server.run(0); // Let Spark dynamically assign an available port
+        System.out.println("Started test HTTP server on port " + port);
+        return "http://localhost:" + port; // Construct the URL
+    }
     @AfterAll
     static void stopServer() {
         server.stop();

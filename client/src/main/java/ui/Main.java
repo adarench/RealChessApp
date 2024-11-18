@@ -1,17 +1,25 @@
 package ui;
-
+import server.Server;
 import java.util.Scanner;
+
 public class Main {
 
-  private static final ServerFacade SERVER_FACADE= new ServerFacade();
+  private static ServerFacade serverFacade;
 
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
   public static void main(String[] args) {
-
+    String serverUrl = startServer(); // Initialize and get dynamic URL
+    serverFacade = new ServerFacade(serverUrl);
 
     showPreloginMenu();
+  }
+
+  private static String startServer() {
+    int port = Server.run(0); // Use 0 to let Spark dynamically assign a port
+    System.out.println("Server started on port " + port);
+    return "http://localhost:" + port; // Construct the URL
   }
 
   private static void showPreloginMenu() {
@@ -64,7 +72,7 @@ public class Main {
     }
 
     // Call ServerFacade to log in
-    String response = SERVER_FACADE.login(username, password);
+    String response = serverFacade.login(username, password);
     System.out.println(response);
 
     if (response.contains("Login successful")) {
@@ -75,7 +83,7 @@ public class Main {
   }
   private static void logout() {
     System.out.println("Logging out...");
-    String response = SERVER_FACADE.logout();
+    String response = serverFacade.logout();
     System.out.println(response);
 
     if (response.contains("Logout successful")) {
@@ -102,7 +110,7 @@ public class Main {
     }
 
     // Call ServerFacade to register
-    String response = SERVER_FACADE.register(username, password, email);
+    String response = serverFacade.register(username, password, email);
     System.out.println(response);
 
     if (response.contains("Registration successful")) {
@@ -119,7 +127,7 @@ public class Main {
 
   private static void listGames() {
     System.out.println("Fetching list of games...");
-    String response = SERVER_FACADE.listGames();
+    String response = serverFacade.listGames();
     if (response.startsWith("Error:")) {
       System.out.println(response); // Display error
     } else {
@@ -136,7 +144,7 @@ public class Main {
       return;
     }
 
-    String response = SERVER_FACADE.createGame(gameName);
+    String response = serverFacade.createGame(gameName);
     System.out.println(response);
   }
   private static void playGame() {
@@ -158,7 +166,7 @@ public class Main {
       return;
     }
 
-    String response = SERVER_FACADE.playGame(gameID,playerColor);
+    String response = serverFacade.playGame(gameID,playerColor);
     System.out.println(response);
 
     if (response.contains("Successfully joined")) {
@@ -178,7 +186,7 @@ public class Main {
       return;
     }
 
-    String response = SERVER_FACADE.observeGame(gameID);
+    String response = serverFacade.observeGame(gameID);
     System.out.println(response);
 
     drawChessBoard(true);

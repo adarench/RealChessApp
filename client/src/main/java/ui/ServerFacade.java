@@ -15,7 +15,10 @@ import model.AuthData;
 
 public class ServerFacade {
 
-  private static final String SERVER_URL = "http://localhost:8080";
+  private final String serverUrl;
+  public ServerFacade(String serverUrl) {
+    this.serverUrl = serverUrl;
+  }
   private String authToken = null; // Store auth token after login
   private final Gson gson = new Gson();
 
@@ -67,7 +70,7 @@ public class ServerFacade {
     }
 
     try {
-      URL url = new URL(SERVER_URL + "/session");
+      URL url = new URL(serverUrl + "/session");
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("DELETE");
       connection.setRequestProperty("Authorization", authToken);
@@ -93,7 +96,7 @@ public class ServerFacade {
 
 
     try {
-      URL url = new URL(SERVER_URL + "/game");
+      URL url = new URL(serverUrl + "/game");
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Authorization", authToken);
@@ -120,7 +123,7 @@ public class ServerFacade {
   public String listGames() {
 
     try {
-      URL url = new URL(SERVER_URL + "/game");
+      URL url = new URL(serverUrl + "/game");
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("GET");
       connection.setRequestProperty("Authorization", authToken);
@@ -151,7 +154,7 @@ public class ServerFacade {
     String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
 
     try {
-      URL url = new URL(SERVER_URL + "/game");
+      URL url = new URL(serverUrl + "/game");
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("PUT");
       connection.setRequestProperty("Authorization", authToken);
@@ -186,7 +189,7 @@ public class ServerFacade {
   // Helper method to send a POST request
   private String sendPostRequest(String endpoint, String jsonInputString) {
     try {
-      URL url = new URL(SERVER_URL + endpoint);
+      URL url = new URL(serverUrl + endpoint);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json");
