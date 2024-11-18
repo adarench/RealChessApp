@@ -1,6 +1,7 @@
 package ui;
-import server.Server;
 import java.util.Scanner;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class Main {
 
@@ -10,17 +11,42 @@ public class Main {
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
   public static void main(String[] args) {
-    String serverUrl = startServer(); // Initialize and get dynamic URL
+    String serverUrl = discoverServer();
+    if (serverUrl == null) {
+      System.err.println("Failed to discover the server. Ensure it is running.");
+      return;
+    }
+
+    System.out.println("Connected to server at: " + serverUrl);
     serverFacade = new ServerFacade(serverUrl);
 
     showPreloginMenu();
   }
 
-  private static String startServer() {
-    int port = Server.run(0); // Use 0 to let Spark dynamically assign a port
-    System.out.println("Server started on port " + port);
-    return "http://localhost:" + port; // Construct the URL
+  private static String discoverServer() {
+    int startPort = 8000;
+    int endPort = 9000;
+
+    for (int port = startPort; port <= endPort; port++) {
+      try {
+        String url = "http://localhost:" + port + "/user"; // Test a known endpoint
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("OPTIONS"); // Use OPTIONS to minimize impact
+        connection.setConnectTimeout(500); // Timeout for each probe
+        connection.setReadTimeout(500);
+
+        if (connection.getResponseCode() == 200) {
+          // Server found
+          return "http://localhost:" + port;
+        }
+      } catch (Exception e) {
+        // Ignore connection failures and continue probing
+      }
+    }
+    return null; // Server not found
   }
+
+
 
   private static void showPreloginMenu() {
     while (true) {

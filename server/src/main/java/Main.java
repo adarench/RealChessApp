@@ -3,9 +3,8 @@ import server.Server;
 
 public class Main {
     public static void main(String[] args) {
-        Server server = new Server();
-        server.run(8080);
-        var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-        System.out.println("♕ 240 Chess Server: " + piece);
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : 0; // Default to dynamic port
+        int assignedPort = Server.run(port);
+        System.out.println("Server running at: http://localhost:" + assignedPort);
     }
 }
