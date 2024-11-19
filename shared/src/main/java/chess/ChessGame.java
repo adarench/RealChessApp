@@ -20,7 +20,7 @@ public class ChessGame {
     }
 
 
-    private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
+    /*private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
     ChessGame.TeamColor opponentColor = (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
     if(position == null){
         return false;
@@ -53,7 +53,50 @@ public class ChessGame {
         }
     }
     return false;
-}
+}*/
+
+    private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
+        if (position == null) {
+            return false;
+        }
+
+        ChessGame.TeamColor opponentColor = (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
+
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition attackerPosition = new ChessPosition(row, col);
+                ChessPiece attacker = board.getPiece(attackerPosition);
+
+                if (attacker != null && attacker.getTeamColor() == opponentColor) {
+                    if (attacker.getPieceType() == ChessPiece.PieceType.PAWN) {
+                        // Check pawn-specific attack positions
+                        if (isPawnAttacking(attackerPosition, position, opponentColor)) {
+                            return true;
+                        }
+                    } else {
+                        // Check if any other piece attacks the position
+                        Collection<ChessMove> attackerMoves = attacker.pieceMoves(board, attackerPosition);
+                        if (attackerMoves.stream().anyMatch(move -> move.getEndPosition().equals(position))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isPawnAttacking(ChessPosition attackerPosition, ChessPosition targetPosition, ChessGame.TeamColor opponentColor) {
+        int direction = (opponentColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+        int attackRow = attackerPosition.getRow() + direction;
+
+        return attackRow == targetPosition.getRow() &&
+                (attackerPosition.getColumn() - 1 == targetPosition.getColumn() ||
+                        attackerPosition.getColumn() + 1 == targetPosition.getColumn());
+    }
+
+
 
     /**
      * @return Which team's turn it is
