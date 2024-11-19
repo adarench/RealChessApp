@@ -23,31 +23,6 @@ public class Main {
     showPreloginMenu();
   }
 
-  /*private static String discoverServer() {
-    int startPort = 8000;
-    int endPort = 9000;
-
-    for (int port = startPort; port <= endPort; port++) {
-      try {
-        String url = "http://localhost:" + port + "/user"; // Test a known endpoint
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setRequestMethod("OPTIONS"); // Use OPTIONS to minimize impact
-        connection.setConnectTimeout(500); // Timeout for each probe
-        connection.setReadTimeout(500);
-
-        if (connection.getResponseCode() == 200) {
-          // Server found
-          return "http://localhost:" + port;
-        }
-      } catch (Exception e) {
-        // Ignore connection failures and continue probing
-      }
-    }
-    return null; // Server not found
-  }*/
-
-
-
   private static void showPreloginMenu() {
     while (true) {
       System.out.println("\n== Chess Client ==");
@@ -199,23 +174,7 @@ public class Main {
       System.out.println("Error: Unable to join. The game is already full.");
     }
   }
-  /*private static void observeGame() {
-    System.out.print("Enter the game ID to observe: ");
-    int gameID;
 
-    try {
-      gameID = Integer.parseInt(scanner.nextLine().trim());
-    } catch (NumberFormatException e) {
-      System.out.println("Error: Invalid game ID.");
-      return;
-    }
-
-    String response = serverFacade.observeGame(gameID);
-    System.out.println(response);
-
-    drawChessBoard(true);
-    drawChessBoard(false);
-  }*/
 
   private static void observeGame() {
     System.out.print("Enter the game name to observe: ");
@@ -235,10 +194,6 @@ public class Main {
       drawChessBoard(false);
     }
   }
-
-
-
-
 
 
 
