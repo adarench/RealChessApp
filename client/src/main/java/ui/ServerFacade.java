@@ -264,27 +264,86 @@ public class ServerFacade {
         }
         in.close();
 
-        // Parse the JSON response to find the game ID
+        // Parse the JSON response
+        JsonObject jsonObject = new Gson().fromJson(response.toString(), JsonObject.class);
+        JsonArray games = jsonObject.getAsJsonArray("games");
+
+        if (games == null || games.size() == 0) {
+          System.out.println("No games found in the response.");
+          return -1; // No games available
+        }
+
+        // Iterate over the games to find a match
+        for (int i = 0; i < games.size(); i++) {
+          JsonObject game = games.get(i).getAsJsonObject();
+          String currentGameName = game.get("gameName").getAsString();
+
+          if (currentGameName.equalsIgnoreCase(gameName)) {
+            // Return the game ID if a match is found
+            return game.get("gameID").getAsInt();
+          }
+        }
+        System.out.println("Game name not found: " + gameName);
+      } else {
+        System.out.println("Error: Server returned HTTP code " + responseCode + " for /game endpoint.");
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return -1; // Return -1 if game is not found or an error occurs
+  }
+
+  /*public String observeGame(int gameID) {
+    // Placeholder: You can expand this later when observing is fully implemented
+    return "Observing game with ID: " + gameID + " (not yet implemented).";
+  }*/
+
+  public String observeGame(String gameName) {
+    try {
+      // Fetch the list of games
+      URL url = new URL(serverUrl + "/game");
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("Authorization", authToken);
+      connection.setRequestProperty("Content-Type", "application/json");
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
+        StringBuilder response = new StringBuilder();
+        String responseLine;
+        while ((responseLine = in.readLine()) != null) {
+          response.append(responseLine.trim());
+        }
+        in.close();
+
+        // Parse the JSON response to find the game by name
         JsonObject jsonObject = new Gson().fromJson(response.toString(), JsonObject.class);
         JsonArray games = jsonObject.getAsJsonArray("games");
 
         for (int i = 0; i < games.size(); i++) {
           JsonObject game = games.get(i).getAsJsonObject();
           String currentGameName = game.get("gameName").getAsString();
+
           if (currentGameName.equalsIgnoreCase(gameName)) {
-            return game.get("gameID").getAsInt();
+            // Return the game data for observation
+            return "Observing game: " + gameName;
           }
         }
+        return "Error: Game with name '" + gameName + "' was not found.";
+      } else {
+        return "Error: Unable to fetch games. Server returned HTTP code " + responseCode;
       }
     } catch (Exception e) {
       e.printStackTrace();
+      return "Error: Unable to complete observation due to " + e.getMessage();
     }
-    return -1; // Return -1 if game is not found
   }
-  public String observeGame(int gameID) {
-    // Placeholder: You can expand this later when observing is fully implemented
-    return "Observing game with ID: " + gameID + " (not yet implemented).";
-  }
+
+
+
+
+
 
 
 

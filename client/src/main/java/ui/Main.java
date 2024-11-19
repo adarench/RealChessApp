@@ -199,7 +199,7 @@ public class Main {
       System.out.println("Error: Unable to join. The game is already full.");
     }
   }
-  private static void observeGame() {
+  /*private static void observeGame() {
     System.out.print("Enter the game ID to observe: ");
     int gameID;
 
@@ -215,7 +215,30 @@ public class Main {
 
     drawChessBoard(true);
     drawChessBoard(false);
+  }*/
+
+  private static void observeGame() {
+    System.out.print("Enter the game name to observe: ");
+    String gameName = scanner.nextLine().trim();
+
+    if (gameName.isEmpty()) {
+      System.out.println("Error: Game name cannot be empty.");
+      return;
+    }
+
+    // Call the observeGame method in ServerFacade
+    String response = serverFacade.observeGame(gameName);
+    System.out.println(response);
+    // Draw the chessboard only if the game was successfully observed
+    if (response.startsWith("Observing game:")) {
+      drawChessBoard(true);
+      drawChessBoard(false);
+    }
   }
+
+
+
+
 
 
 
@@ -239,11 +262,9 @@ public class Main {
           break;
         case "playgame":
           playGame();
-          System.out.println("PlayGame functionality not implemented yet.");
           break;
         case "observegame":
           observeGame();
-          System.out.println("ObserveGame functionality not implemented yet.");
           break;
         case "logout":
           logout();

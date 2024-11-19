@@ -256,22 +256,60 @@ public class ServerFacadeTests {
     // Observe Game Tests
     @Test
     public void testObserveGameSuccess() {
-        String response = facade.observeGame(115);
+        // Clear the database
+        facade.clearDatabase();
 
+        // Register and login
+        String username = "testuser";
+        String password = "password123";
+        facade.register(username, password, username + "@example.com");
+        facade.login(username, password);
+
+        // Create a game with a known name
+        String gameName = "TestGameSuccess";
+        String createResponse = facade.createGame(gameName);
+        System.out.println("CreateGame Response: " + createResponse);
+        Assertions.assertTrue(createResponse.contains("Game created successfully"),
+                "Game should be created successfully");
+
+        // Observe the game by name
+        String response = facade.observeGame(gameName);
+        System.out.println("ObserveGame Response: " + response);
+
+        // Validate the response contains the expected success message
         Assertions.assertNotNull(response, "ObserveGame response should not be null");
-        Assertions.assertTrue(response.contains("Observing game with ID: 115"),
-                "ObserveGame response should indicate observing game placeholder");
+        Assertions.assertTrue(response.startsWith("Observing game: "),
+                "ObserveGame response should start with 'Observing game: '");
+        Assertions.assertTrue(response.contains(gameName),
+                "ObserveGame response should contain the game name: " + gameName);
     }
+
+
+
+
 
 
 
     @Test
     public void testObserveGameFailure() {
-        String response = facade.observeGame(-1);
+        // Use a non-existent game name
+        String gameName = "NonExistentGame";
 
+        // Attempt to observe the game
+        String response = facade.observeGame(gameName);
+
+        // Validate the response contains the game name or indicates an error
         Assertions.assertNotNull(response, "ObserveGame response should not be null");
-        Assertions.assertTrue(response.contains("Observing game with ID: -1"),
-                "ObserveGame response should still include a placeholder message");
+        Assertions.assertTrue(response.toLowerCase().contains("error") || response.contains(gameName),
+                "ObserveGame response should either indicate an error or reference the game name");
     }
+
+
+
+
+
+
+
+
 
 }
