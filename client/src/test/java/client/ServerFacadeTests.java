@@ -3,10 +3,10 @@ package client;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ui.ServerFacade;
 import server.Server;
-import model.AuthData;
 import com.google.gson.Gson;
 
 import com.google.gson.JsonObject;
@@ -32,6 +32,13 @@ public class ServerFacadeTests {
         System.out.println("Started test HTTP server on port " + port);
         return "http://localhost:" + port; // Construct the URL
     }
+
+    @BeforeEach
+    public void clearDatabase() {
+        String response = facade.clearDatabase();
+        System.out.println("Clear Database Response: " + response);
+    }
+
     @AfterAll
     static void stopServer() {
         server.stop();
@@ -128,13 +135,18 @@ public class ServerFacadeTests {
     public void testListGamesSuccess() {
         facade.register("listgamesuser", "password123", "listgamesuser@example.com");
         facade.login("listgamesuser", "password123");
-        facade.createGame("Test Game");
+        facade.createGame("Test Game 1");
+        facade.createGame("Test Game 2");
 
         String response = facade.listGames();
         Assertions.assertNotNull(response, "ListGames response should not be null");
-        Assertions.assertTrue(response.contains("\"games\":"),
-                "ListGames response should contain a list of games");
+        Assertions.assertTrue(response.contains("Game Name Test Game 1"),
+                "ListGames response should contain the name of the first game");
+        Assertions.assertTrue(response.contains("Game Name Test Game 2"),
+                "ListGames response should contain the name of the second game");
     }
+
+
 
     @Test
     public void testListGamesUnauthorized() {
@@ -147,37 +159,57 @@ public class ServerFacadeTests {
     }
 
     // Play Game Tests
+    // Play Game Tests
     @Test
     public void testPlayGameSuccess() {
-        String username = "playgameuser";
+        String username = "playgameuser" + System.currentTimeMillis();
         String password = "password123";
-        facade.register(username, password, username + "@example.com");
-        facade.login(username, password);
+        String email = username + "@example.com";
 
-        String createGameResponse = facade.createGame("Test Game");
-        Assertions.assertTrue(createGameResponse.contains("Game created successfully"),
+        // Register the user
+        String registerResponse = facade.register(username, password, email);
+        System.out.println("Register Response: " + registerResponse);
+        Assertions.assertTrue(registerResponse.contains("Registration successful"),
+                "Register response should indicate success");
+
+        // Login the user
+        String loginResponse = facade.login(username, password);
+        System.out.println("Login Response: " + loginResponse);
+        Assertions.assertEquals("Login successful", loginResponse,
+                "Login response should indicate success");
+
+        // Create a game
+        String gameName = "Test Game";
+        String createGameResponse = facade.createGame(gameName);
+        System.out.println("CreateGame Response: " + createGameResponse);
+        Assertions.assertTrue(createGameResponse.contains("Game created successfully."),
                 "CreateGame response should indicate success");
 
-        String listGamesResponse = facade.listGames();
-        JsonObject listGamesJson = gson.fromJson(listGamesResponse, JsonObject.class);
-        JsonArray gamesArray = listGamesJson.getAsJsonArray("games");
-        int gameID = gamesArray.get(gamesArray.size() - 1).getAsJsonObject().get("gameID").getAsInt();
-
-        String playGameResponse = facade.playGame(gameID, "white");
+        // Join the game
+        String playGameResponse = facade.playGame(gameName, "white");
+        System.out.println("PlayGame Response: " + playGameResponse);
         Assertions.assertNotNull(playGameResponse, "PlayGame response should not be null");
-        Assertions.assertEquals("Successfully joined the game.", playGameResponse,
+        Assertions.assertTrue(playGameResponse.startsWith("Successfully joined the game:"),
                 "PlayGame response should indicate success");
     }
+
+
+
+
+
+
 
     @Test
     public void testPlayGameFailure() {
         facade.login("testuser", "password123");
 
-        String response = facade.playGame(-1, "blue");
+        // Attempt to play a non-existent game by name
+        String response = facade.playGame("NonExistentGame", "blue");
         Assertions.assertNotNull(response, "PlayGame response should not be null");
         Assertions.assertTrue(response.contains("Error") || response.contains("Invalid"),
-                "PlayGame response should indicate an error");
+                "PlayGame response should indicate an error for invalid game name");
     }
+
 
     // Observe Game Tests
     @Test
@@ -189,6 +221,8 @@ public class ServerFacadeTests {
                 "ObserveGame response should indicate observing game placeholder");
     }
 
+
+
     @Test
     public void testObserveGameFailure() {
         String response = facade.observeGame(-1);
@@ -197,4 +231,5 @@ public class ServerFacadeTests {
         Assertions.assertTrue(response.contains("Observing game with ID: -1"),
                 "ObserveGame response should still include a placeholder message");
     }
+
 }

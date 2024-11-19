@@ -11,7 +11,7 @@ public class Main {
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
   public static void main(String[] args) {
-    String serverUrl = discoverServer();
+    String serverUrl = "http://localhost:8080";
     if (serverUrl == null) {
       System.err.println("Failed to discover the server. Ensure it is running.");
       return;
@@ -23,7 +23,7 @@ public class Main {
     showPreloginMenu();
   }
 
-  private static String discoverServer() {
+  /*private static String discoverServer() {
     int startPort = 8000;
     int endPort = 9000;
 
@@ -44,7 +44,7 @@ public class Main {
       }
     }
     return null; // Server not found
-  }
+  }*/
 
 
 
@@ -174,13 +174,11 @@ public class Main {
     System.out.println(response);
   }
   private static void playGame() {
-    System.out.print("Enter the game ID to join: ");
-    int gameID;
+    System.out.print("Enter the game name to join: ");
+    String gameName = scanner.nextLine().trim();
 
-    try {
-      gameID = Integer.parseInt(scanner.nextLine().trim());
-    } catch (NumberFormatException e) {
-      System.out.println("Error: Invalid game ID.");
+    if (gameName.isEmpty()) {
+      System.out.println("Error: Game name cannot be empty.");
       return;
     }
 
@@ -192,7 +190,7 @@ public class Main {
       return;
     }
 
-    String response = serverFacade.playGame(gameID,playerColor);
+    String response = serverFacade.playGame(gameName,playerColor);
     System.out.println(response);
 
     if (response.contains("Successfully joined")) {
@@ -290,18 +288,25 @@ public class Main {
     }
 
     // Draw the board with alternating colors
-    System.out.println("  a b c d e f g h");
     for (int row = 0; row < 8; row++) {
-      System.out.print((whiteAtBottom ? 8 - row : row + 1) + " ");
       for (int col = 0; col < 8; col++) {
         boolean isLightSquare = (row + col) % 2 == 0;
         String squareColor = isLightSquare ? "\u001B[47m" : "\u001B[40m"; // White or Black background
         String reset = "\u001B[0m"; // Reset colors
         System.out.print(squareColor + board[row][col] + " " + reset);
       }
-      System.out.println();
+      System.out.println(" " + (whiteAtBottom ? 8 - row : row + 1)); // Print numbers on the right
     }
+
+    // Print letters at the bottom
+    System.out.print("  ");
+    for (char col = 'a'; col <= 'h'; col++) {
+      System.out.print(col + " ");
+    }
+    System.out.println();
   }
+
+
 
 
 }

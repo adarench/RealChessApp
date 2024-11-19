@@ -7,6 +7,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 
 
 
@@ -112,7 +115,7 @@ public class ServerFacade {
       if (responseCode == HttpURLConnection.HTTP_OK) {
         return "Game created successfully.";
       } else {
-        return "Error: Unable to create game. Server returned HTTP code " + responseCode;
+        return "Error: Unable to create game.";
       }
 
     } catch (Exception e) {
@@ -138,9 +141,9 @@ public class ServerFacade {
           response.append(responseLine.trim());
         }
         in.close();
-        return response.toString(); // Return the list of games
+        return formatGameList(response.toString()); // Return the list of games
       } else {
-        return "Error: Unable to fetch games. Server returned HTTP code " + responseCode;
+        return "Error: Unable to fetch games. Server returned HTTP code";
       }
 
     } catch (Exception e) {
@@ -149,9 +152,50 @@ public class ServerFacade {
     }
   }
 
-  public String playGame(int gameID, String playerColor) {
+  private String formatGameList(String jsonResponse) {
+    try {
+      // Parse JSON response
+      JsonObject jsonObject = new Gson().fromJson(jsonResponse, JsonObject.class);
+      JsonArray games = jsonObject.getAsJsonArray("games");
 
+      if (games == null || games.size() == 0) {
+        return "No games available.";
+      }
+
+      // Format game list
+      StringBuilder formattedList = new StringBuilder("Available Games:\n");
+      for (int i = 0; i < games.size(); i++) {
+        JsonObject game = games.get(i).getAsJsonObject();
+        String gameName = game.get("gameName").getAsString();
+        JsonArray players = game.getAsJsonArray("players");
+
+        formattedList.append("Game Name ").append(gameName);
+
+        if (players != null && players.size() > 0) {
+          formattedList.append(", Players: ");
+          for (int j = 0; j < players.size(); j++) {
+            formattedList.append(players.get(j).getAsString());
+            if (j < players.size() - 1) {
+              formattedList.append(", ");
+            }
+          }
+        }
+        formattedList.append("\n");
+      }
+      return formattedList.toString();
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Error parsing game list.";
+    }
+  }
+  public String playGame(String gameName, String playerColor) {
+
+    int gameID = getGameIdByName(gameName);
+    if (gameID == -1) {
+      return "Error: Game not found with the name: " + gameName;
+    }
     String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
+
 
     try {
       URL url = new URL(serverUrl + "/game");
@@ -168,9 +212,9 @@ public class ServerFacade {
 
       int responseCode = connection.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
-        return "Successfully joined the game.";
+        return "Successfully joined the game: ";
       } else {
-        return "Error: Unable to join the game. Server returned HTTP code " + responseCode;
+        return "Error: Unable to join the game.";
       }
 
     } catch (Exception e) {
@@ -178,10 +222,67 @@ public class ServerFacade {
       return "Error: " + e.getMessage();
     }
   }
+
+  public String clearDatabase() {
+    try {
+      URL url = new URL(serverUrl + "/db");
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("DELETE");
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        return "Database cleared successfully.";
+      } else {
+        return "Error: Unable to clear database.";
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Error: " + e.getMessage();
+    }
+  }
+
+
+  private int getGameIdByName(String gameName) {
+    try {
+      // Fetch the list of games
+      URL url = new URL(serverUrl + "/game");
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("GET");
+      connection.setRequestProperty("Authorization", authToken);
+      connection.setRequestProperty("Content-Type", "application/json");
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
+        StringBuilder response = new StringBuilder();
+        String responseLine;
+        while ((responseLine = in.readLine()) != null) {
+          response.append(responseLine.trim());
+        }
+        in.close();
+
+        // Parse the JSON response to find the game ID
+        JsonObject jsonObject = new Gson().fromJson(response.toString(), JsonObject.class);
+        JsonArray games = jsonObject.getAsJsonArray("games");
+
+        for (int i = 0; i < games.size(); i++) {
+          JsonObject game = games.get(i).getAsJsonObject();
+          String currentGameName = game.get("gameName").getAsString();
+          if (currentGameName.equalsIgnoreCase(gameName)) {
+            return game.get("gameID").getAsInt();
+          }
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return -1; // Return -1 if game is not found
+  }
   public String observeGame(int gameID) {
     // Placeholder: You can expand this later when observing is fully implemented
     return "Observing game with ID: " + gameID + " (not yet implemented).";
   }
+
+
 
 
 
