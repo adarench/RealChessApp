@@ -181,9 +181,14 @@ public class ServerFacade {
     String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
     String response = sendHttpRequest("/game", "PUT", jsonInputString);
 
-    if (response.startsWith("Error:")) {
-      return response; // Pass the error back if something goes wrong
+    if (response.equals("Error: Server returned HTTP code 403")) {
+      return "Error: Game is full.";
     }
+
+    if (response.startsWith("Error:")) {
+      return response; // Pass other errors back as-is
+    }
+
     return "Successfully joined the game: " + gameName;
   }
 

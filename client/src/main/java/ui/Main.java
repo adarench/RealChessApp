@@ -254,16 +254,19 @@ public class Main {
             {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"}
     };
 
-    // Adjust for black perspective
+    // Flip board for black perspective
     if (!whiteAtBottom) {
-      for (int i = 0; i < board.length / 2; i++) {
-        String[] temp = board[i];
-        board[i] = board[board.length - 1 - i];
-        board[board.length - 1 - i] = temp;
+      for (int row = 0; row < board.length; row++) {
+        // Reverse each row to flip horizontally
+        for (int col = 0; col < board[row].length / 2; col++) {
+          String temp = board[row][col];
+          board[row][col] = board[row][board[row].length - 1 - col];
+          board[row][board[row].length - 1 - col] = temp;
+        }
       }
     }
 
-    // Draw the board with alternating colors
+    // Draw the board
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         boolean isLightSquare = (row + col) % 2 == 0;
@@ -271,16 +274,20 @@ public class Main {
         String reset = "\u001B[0m"; // Reset colors
         System.out.print(squareColor + board[row][col] + " " + reset);
       }
-      System.out.println(" " + (whiteAtBottom ? 8 - row : row + 1)); // Print numbers on the right
+      // Print row numbers on the right
+      System.out.println(" " + (whiteAtBottom ? 8 - row : row + 1));
     }
 
-    // Print column labels (always the same for both perspectives)
+    // Print column labels
     System.out.print("");
-    for (char col = 'a'; col <= 'h'; col++) {
+    char[] columns = whiteAtBottom ? new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}
+            : new char[]{'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'};
+    for (char col : columns) {
       System.out.print(col + " ");
     }
     System.out.println();
   }
+
 
 
 
