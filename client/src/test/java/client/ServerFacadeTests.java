@@ -9,9 +9,6 @@ import ui.ServerFacade;
 import server.Server;
 import com.google.gson.Gson;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
-
 public class ServerFacadeTests {
 
     private static Server server;
@@ -100,7 +97,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void testLogout_Failure() {
+    public void testLogoutFailure() {
         String response = facade.logout(); // No user logged in
         Assertions.assertNotNull(response, "Logout response should not be null");
         Assertions.assertTrue(response.contains("Error"),

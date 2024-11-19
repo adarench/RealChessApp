@@ -293,10 +293,7 @@ public class ServerFacade {
     return -1; // Return -1 if game is not found or an error occurs
   }
 
-  /*public String observeGame(int gameID) {
-    // Placeholder: You can expand this later when observing is fully implemented
-    return "Observing game with ID: " + gameID + " (not yet implemented).";
-  }*/
+
 
   public String observeGame(String gameName) {
     try {

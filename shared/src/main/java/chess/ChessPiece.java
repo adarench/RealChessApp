@@ -120,16 +120,7 @@ public class ChessPiece {
         int[] rowOffsets = {1, 1, 1, 0, 0, -1, -1, -1};
         int[] colOffsets = {1, 0, -1, 1, -1, 1, 0, -1};
 
-        //regular moves
-        for (int i = 0; i < 8; i++) {
-            ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i],
-                    position.getColumn() + colOffsets[i]);
-            if (isValidPosition(newPosition)
-                    && (board.getPiece(newPosition) ==
-                    null || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
-                validMoves.add(new ChessMove(position, newPosition, null));
-            }
-        }
+        addMovesFromOffsets(board, position, validMoves, rowOffsets, colOffsets);
 
     }
 
@@ -139,17 +130,20 @@ public class ChessPiece {
         int[] rowOffsets = {2, 2, -2, -2, 1, 1, -1, -1};
         int[] colOffsets = {1, -1, 1, -1, 2, -2, 2, -2};
 
-        for (int i = 0; i < 8; i++) {
+        addMovesFromOffsets(board, position, validMoves, rowOffsets, colOffsets);
+
+    }
+
+    private void addMovesFromOffsets(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves, int[] rowOffsets, int[] colOffsets) {
+        for (int i = 0; i < rowOffsets.length; i++) {
             ChessPosition newPosition = new ChessPosition(position.getRow() + rowOffsets[i],
                     position.getColumn() + colOffsets[i]);
             if (isValidPosition(newPosition) &&
-                    (board.getPiece(newPosition) == null
-                            || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
+                    (board.getPiece(newPosition) == null || board.getPiece(newPosition).getTeamColor() != this.teamColor)) {
                 validMoves.add(new ChessMove(position, newPosition, null));
             }
         }
     }
-
     private void addPawnMoves(ChessBoard board, ChessPosition position, Collection<ChessMove> validMoves) {
         int direction = (teamColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
 
