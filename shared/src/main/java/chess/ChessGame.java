@@ -19,42 +19,6 @@ public class ChessGame {
         this.board.resetBoard();
     }
 
-
-    /*private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
-    ChessGame.TeamColor opponentColor = (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-    if(position == null){
-        return false;
-    }
-    for (int row = 1; row <= 8; row++) {
-        for (int col = 1; col <= 8; col++) {
-            ChessPosition attackerPosition = new ChessPosition(row, col);
-            ChessPiece attacker = board.getPiece(attackerPosition);
-
-            if (attacker != null && attacker.getTeamColor() == opponentColor) {
-                if (attacker.getPieceType() == ChessPiece.PieceType.PAWN) {
-                    // Check pawn attack positions
-                    int direction = (opponentColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
-                    int attackRow = attackerPosition.getRow() + direction;
-
-                    if (attackRow == position.getRow()) {
-                        if (attackerPosition.getColumn() - 1 == position.getColumn() || attackerPosition.getColumn() + 1 == position.getColumn()) {
-                            return true; // Position is under attack by pawn
-                        }
-                    }
-                } else {
-                    Collection<ChessMove> attackerMoves = attacker.pieceMoves(board, attackerPosition);
-                    for (ChessMove attackerMove : attackerMoves) {
-                        if (attackerMove.getEndPosition().equals(position)) {
-                            return true; // Position is under attack
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}*/
-
     private boolean isSquareUnderAttack(ChessBoard board, ChessPosition position, ChessGame.TeamColor teamColor) {
         if (position == null) {
             return false;
