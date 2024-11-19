@@ -275,7 +275,7 @@ public class Main {
     }
 
     // Print letters at the bottom
-    System.out.print("  ");
+    System.out.print("");
     for (char col = 'a'; col <= 'h'; col++) {
       System.out.print(col + " ");
     }
