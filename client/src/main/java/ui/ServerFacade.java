@@ -23,6 +23,8 @@ public class ServerFacade {
     this.serverUrl = serverUrl;
   }
   private String authToken = null; // Store auth token after login
+  private String currentUsername = null;
+
   private final Gson gson = new Gson();
 
   // Registers a new user
@@ -40,6 +42,7 @@ public class ServerFacade {
     try {
       AuthData authData = gson.fromJson(response, AuthData.class);
       this.authToken = authData.authToken();
+      this.currentUsername = authData.username();
       return "Registration successful for user: " + authData.username();
     } catch (Exception e) {
       e.printStackTrace();
@@ -60,6 +63,7 @@ public class ServerFacade {
     try {
       AuthData authData = gson.fromJson(response, AuthData.class);
       this.authToken = authData.authToken();
+      this.currentUsername = authData.username();
       return "Login successful";
     } catch (Exception e) {
       return "Error parsing auth data";
@@ -142,6 +146,7 @@ public class ServerFacade {
         }
         in.close();
         return formatGameList(response.toString()); // Return the list of games
+
       } else {
         return "Error: Unable to fetch games. Server returned HTTP code";
       }
@@ -154,33 +159,26 @@ public class ServerFacade {
 
   private String formatGameList(String jsonResponse) {
     try {
-      // Parse JSON response
-      JsonObject jsonObject = new Gson().fromJson(jsonResponse, JsonObject.class);
+      JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
       JsonArray games = jsonObject.getAsJsonArray("games");
 
       if (games == null || games.size() == 0) {
         return "No games available.";
       }
 
-      // Format game list
-      StringBuilder formattedList = new StringBuilder("Available Games:\n");
+      StringBuilder formattedList = new StringBuilder();
       for (int i = 0; i < games.size(); i++) {
         JsonObject game = games.get(i).getAsJsonObject();
         String gameName = game.get("gameName").getAsString();
-        JsonArray players = game.getAsJsonArray("players");
 
-        formattedList.append("Game Name ").append(gameName);
+        // Check for player fields
+        String whiteStatus = game.has("whiteUsername") ? "Occupied by " + game.get("whiteUsername").getAsString() : "Available";
+        String blackStatus = game.has("blackUsername") ? "Occupied by " + game.get("blackUsername").getAsString() : "Available";
 
-        if (players != null && players.size() > 0) {
-          formattedList.append(", Players: ");
-          for (int j = 0; j < players.size(); j++) {
-            formattedList.append(players.get(j).getAsString());
-            if (j < players.size() - 1) {
-              formattedList.append(", ");
-            }
-          }
-        }
-        formattedList.append("\n");
+        // Build the formatted game entry
+        formattedList.append(i + 1).append(". ").append(gameName)
+                .append(" (White: ").append(whiteStatus)
+                .append(", Black: ").append(blackStatus).append(")\n");
       }
       return formattedList.toString();
     } catch (Exception e) {
@@ -188,6 +186,12 @@ public class ServerFacade {
       return "Error parsing game list.";
     }
   }
+
+
+
+
+
+
   public String playGame(String gameName, String playerColor) {
 
     int gameID = getGameIdByName(gameName);

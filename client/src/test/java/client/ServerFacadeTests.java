@@ -133,18 +133,60 @@ public class ServerFacadeTests {
     // List Games Tests
     @Test
     public void testListGamesSuccess() {
+        // Ensure clean server state
+        facade.clearDatabase();
+
+        // Register and log in the test user
         facade.register("listgamesuser", "password123", "listgamesuser@example.com");
         facade.login("listgamesuser", "password123");
-        facade.createGame("Test Game 1");
-        facade.createGame("Test Game 2");
 
+        // Create test games with dynamic names
+        facade.createGame("Dynamic Game 1");
+        facade.createGame("Dynamic Game 2");
+        facade.createGame("Dynamic Game 3");
+
+        // Get the list of games
         String response = facade.listGames();
+
+        // Debug the response for validation
+        System.out.println("ListGames response during test: " + response);
+
+        // Ensure the response is not null
         Assertions.assertNotNull(response, "ListGames response should not be null");
-        Assertions.assertTrue(response.contains("Game Name Test Game 1"),
-                "ListGames response should contain the name of the first game");
-        Assertions.assertTrue(response.contains("Game Name Test Game 2"),
-                "ListGames response should contain the name of the second game");
+
+        // Validate general structure: game numbering and formatting
+        Assertions.assertTrue(response.contains("1. "),
+                "ListGames response should number games starting at 1");
+        Assertions.assertTrue(response.contains("2. "),
+                "ListGames response should number games correctly");
+        Assertions.assertTrue(response.contains("3. "),
+                "ListGames response should number all games dynamically");
+
+        // Validate each game name appears in the list
+        Assertions.assertTrue(response.contains("Dynamic Game 1"),
+                "ListGames response should include 'Dynamic Game 1'");
+        Assertions.assertTrue(response.contains("Dynamic Game 2"),
+                "ListGames response should include 'Dynamic Game 2'");
+        Assertions.assertTrue(response.contains("Dynamic Game 3"),
+                "ListGames response should include 'Dynamic Game 3'");
+
+        // Validate slot statuses (Available or Occupied)
+        Assertions.assertTrue(response.contains("White: Available") || response.contains("White: Occupied by"),
+                "ListGames response should indicate whether the White slot is Available or Occupied");
+        Assertions.assertTrue(response.contains("Black: Available") || response.contains("Black: Occupied by"),
+                "ListGames response should indicate whether the Black slot is Available or Occupied");
+
+        // Ensure at least one available slot exists across all games
+        Assertions.assertTrue(response.contains("Available"),
+                "ListGames response should indicate at least one available slot for any game");
     }
+
+
+
+
+
+
+
 
 
 
