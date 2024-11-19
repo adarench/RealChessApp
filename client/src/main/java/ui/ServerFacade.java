@@ -128,34 +128,14 @@ public class ServerFacade {
     }
   }
   public String listGames() {
+    String response = sendHttpRequest("/game", "GET", null);
 
-    try {
-      URL url = new URL(serverUrl + "/game");
-      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestMethod("GET");
-      connection.setRequestProperty("Authorization", authToken);
-      connection.setRequestProperty("Content-Type", "application/json");
-
-      int responseCode = connection.getResponseCode();
-      if (responseCode == HttpURLConnection.HTTP_OK) {
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"));
-        StringBuilder response = new StringBuilder();
-        String responseLine;
-        while ((responseLine = in.readLine()) != null) {
-          response.append(responseLine.trim());
-        }
-        in.close();
-        return formatGameList(response.toString()); // Return the list of games
-
-      } else {
-        return "Error: Unable to fetch games. Server returned HTTP code";
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      return "Error: " + e.getMessage();
+    if (response.startsWith("Error:")) {
+      return response; // Pass the error back if fetching games fails
     }
+    return formatGameList(response); // Use the existing logic for formatting
   }
+
 
   private String formatGameList(String jsonResponse) {
     try {
@@ -193,32 +173,49 @@ public class ServerFacade {
 
 
   public String playGame(String gameName, String playerColor) {
-
     int gameID = getGameIdByName(gameName);
     if (gameID == -1) {
       return "Error: Game not found with the name: " + gameName;
     }
+
     String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
+    String response = sendHttpRequest("/game", "PUT", jsonInputString);
+
+    if (response.startsWith("Error:")) {
+      return response; // Pass the error back if something goes wrong
+    }
+    return "Successfully joined the game: " + gameName;
+  }
 
 
+  private String sendHttpRequest(String endpoint, String method, String jsonInputString) {
     try {
-      URL url = new URL(serverUrl + "/game");
+      URL url = new URL(serverUrl + endpoint);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestMethod("PUT");
+      connection.setRequestMethod(method);
       connection.setRequestProperty("Authorization", authToken);
       connection.setRequestProperty("Content-Type", "application/json");
-      connection.setDoOutput(true);
 
-      try (OutputStream os = connection.getOutputStream()) {
-        byte[] input = jsonInputString.getBytes("utf-8");
-        os.write(input, 0, input.length);
+      if (method.equals("PUT") || method.equals("POST")) {
+        connection.setDoOutput(true);
+        try (OutputStream os = connection.getOutputStream()) {
+          byte[] input = jsonInputString.getBytes("utf-8");
+          os.write(input, 0, input.length);
+        }
       }
 
       int responseCode = connection.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
-        return "Successfully joined the game: ";
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+          StringBuilder response = new StringBuilder();
+          String responseLine;
+          while ((responseLine = in.readLine()) != null) {
+            response.append(responseLine.trim());
+          }
+          return response.toString();
+        }
       } else {
-        return "Error: Unable to join the game.";
+        return "Error: Server returned HTTP code " + responseCode;
       }
 
     } catch (Exception e) {
@@ -226,6 +223,9 @@ public class ServerFacade {
       return "Error: " + e.getMessage();
     }
   }
+
+
+
 
   public String clearDatabase() {
     try {
