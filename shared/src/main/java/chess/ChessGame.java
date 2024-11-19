@@ -44,7 +44,8 @@ public class ChessGame {
         return (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
     }
 
-    private boolean isAttackingPosition(ChessPiece attacker, ChessBoard board, ChessPosition attackerPosition, ChessPosition targetPosition, ChessGame.TeamColor opponentColor) {
+    private boolean isAttackingPosition(ChessPiece attacker, ChessBoard board, ChessPosition attackerPosition,
+                                        ChessPosition targetPosition, ChessGame.TeamColor opponentColor) {
         if (attacker == null || attacker.getTeamColor() != opponentColor) {
             return false;
         }
@@ -243,29 +244,42 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
 
-    //iterate through pieces to see if king is in check
+
+
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition(teamColor);
-        TeamColor opponentColor = (teamColor == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
+        if (kingPosition == null) {
+            return false; // No king found, cannot be in check
+        }
+
+        TeamColor opponentColor = getOpponentColor(teamColor);
 
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-
-                if (piece != null && piece.getTeamColor() == opponentColor) {
-
-                    Collection<ChessMove> moves = piece.pieceMoves(board, position, this);
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true; // King is in check
-                        }
-                    }
+                if (isAttackingKing(position, kingPosition, opponentColor)) {
+                    return true; // King is under attack
                 }
             }
         }
+
         return false; // King is not in check
     }
+
+    private boolean isAttackingKing(ChessPosition position, ChessPosition kingPosition, TeamColor opponentColor) {
+        ChessPiece piece = board.getPiece(position);
+        if (piece == null || piece.getTeamColor() != opponentColor) {
+            return false; // Not an opponent's piece
+        }
+
+        return isPieceThreateningKing(piece, position, kingPosition);
+    }
+
+    private boolean isPieceThreateningKing(ChessPiece piece, ChessPosition position, ChessPosition kingPosition) {
+        Collection<ChessMove> moves = piece.pieceMoves(board, position, this);
+        return moves.stream().anyMatch(move -> move.getEndPosition().equals(kingPosition));
+    }
+
 
 
     /**
