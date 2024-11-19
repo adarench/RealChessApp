@@ -254,7 +254,7 @@ public class Main {
             {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"}
     };
 
-    // Flip board for black perspective
+    // Adjust for black perspective
     if (!whiteAtBottom) {
       for (int i = 0; i < board.length / 2; i++) {
         String[] temp = board[i];
@@ -274,13 +274,14 @@ public class Main {
       System.out.println(" " + (whiteAtBottom ? 8 - row : row + 1)); // Print numbers on the right
     }
 
-    // Print letters at the bottom
+    // Print column labels (always the same for both perspectives)
     System.out.print("");
     for (char col = 'a'; col <= 'h'; col++) {
       System.out.print(col + " ");
     }
     System.out.println();
   }
+
 
 
 

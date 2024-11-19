@@ -345,7 +345,7 @@ public class ServerFacade {
       } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
         return "Error: Username already exists";
       } else {
-        return "Error: Server returned HTTP code " + responseCode;
+        return "Error";
       }
 
     } catch (Exception e) {
