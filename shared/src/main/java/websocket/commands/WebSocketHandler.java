@@ -50,6 +50,12 @@ public class WebSocketHandler {
     return new ServerMessage(ServerMessageType.NOTIFICATION);
   }
 
+  private ServerMessage handleResign(UserGameCommand command) {
+    // Placeholder for resign logic
+    broadcastNotification(command.getGameID(), "A player resigned");
+    return new ServerMessage(ServerMessageType.NOTIFICATION);
+  }
+
   // Placeholder methods to be implemented as needed
 
   private boolean isValidAuthToken(String authToken) {
