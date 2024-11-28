@@ -33,6 +33,16 @@ public class WebSocketHandler {
     return loadGameMessage;
   }
 
+  private ServerMessage handleMakeMove(UserGameCommand command) {
+    // Placeholder for making a move in the game
+    if (!isValidAuthToken(command.getAuthToken()) || !gameExists(command.getGameID())) {
+      return new ServerMessage(ServerMessageType.ERROR);
+    }
+    // Assume a valid move is made
+    broadcastNotification(command.getGameID(), "A move was made");
+    return new ServerMessage(ServerMessageType.NOTIFICATION);
+  }
+
   // Placeholder methods to be implemented as needed
 
   private boolean isValidAuthToken(String authToken) {
