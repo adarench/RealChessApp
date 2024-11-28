@@ -43,6 +43,13 @@ public class WebSocketHandler {
     return new ServerMessage(ServerMessageType.NOTIFICATION);
   }
 
+  private ServerMessage handleLeave(UserGameCommand command) {
+    // Remove the user from the game (either player or observer)
+    removeUserFromGame(command.getAuthToken(), command.getGameID());
+    broadcastNotification(command.getGameID(), "A user left the game");
+    return new ServerMessage(ServerMessageType.NOTIFICATION);
+  }
+
   // Placeholder methods to be implemented as needed
 
   private boolean isValidAuthToken(String authToken) {
