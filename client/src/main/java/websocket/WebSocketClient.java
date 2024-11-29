@@ -7,12 +7,16 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.google.gson.Gson;
+import websocket.messages.ServerMessage;
+
 /**
  * A WebSocket client using Java's built-in WebSocket API.
  */
 public class WebSocketClient {
   private WebSocket webSocket;
   private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+  private final Gson gson = new Gson();
 
   /**
    * Connects to the WebSocket server at the given URI.
@@ -91,10 +95,9 @@ public class WebSocketClient {
       String message = data.toString();
       System.out.println("Message received: " + message);
       WebSocketMessageHandler.handleMessage(message); // Delegate message handling
-      messageQueue.offer(message); // Still queue the message for other use
+      messageQueue.offer(message); // Queue the message for other use
       return CompletableFuture.completedFuture(null);
     }
-
 
     @Override
     public CompletableFuture<?> onClose(WebSocket webSocket, int statusCode, String reason) {
@@ -105,6 +108,7 @@ public class WebSocketClient {
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
       System.err.println("WebSocket error: " + error.getMessage());
+      error.printStackTrace();
     }
   }
 }

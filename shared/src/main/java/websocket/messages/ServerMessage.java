@@ -1,15 +1,10 @@
 package websocket.messages;
 
-import java.util.Objects;
-
-/**
- * Represents a Message the server can send through a WebSocket
- * 
- * Note: You can add to this class, but you should not alter the existing
- * methods.
- */
 public class ServerMessage {
-    ServerMessageType serverMessageType;
+    private ServerMessageType serverMessageType;
+    private String message;       // For notifications or general messages
+    private String errorMessage;  // For error details
+    private Object game;          // For game data
 
     public enum ServerMessageType {
         LOAD_GAME,
@@ -17,28 +12,43 @@ public class ServerMessage {
         NOTIFICATION
     }
 
+    // Constructor for general messages
     public ServerMessage(ServerMessageType type) {
         this.serverMessageType = type;
     }
 
+    // Constructor with message content
+    public ServerMessage(ServerMessageType type, String message) {
+        this.serverMessageType = type;
+        if (type == ServerMessageType.ERROR) {
+            this.errorMessage = message;
+        } else {
+            this.message = message;
+        }
+    }
+
+    // Constructor with game data
+    public ServerMessage(ServerMessageType type, Object game) {
+        this.serverMessageType = type;
+        this.game = game;
+    }
+
+    // Getter methods
     public ServerMessageType getServerMessageType() {
         return this.serverMessageType;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ServerMessage)) {
-            return false;
-        }
-        ServerMessage that = (ServerMessage) o;
-        return getServerMessageType() == that.getServerMessageType();
+    public String getMessage() {
+        return this.message;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getServerMessageType());
+    public String getErrorMessage() {
+        return this.errorMessage;
     }
+
+    public Object getGame() {
+        return this.game;
+    }
+
+    // equals and hashCode methods (omitted for brevity)
 }

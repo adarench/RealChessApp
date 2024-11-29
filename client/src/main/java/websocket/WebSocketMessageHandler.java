@@ -1,6 +1,11 @@
 package websocket;
 
+import com.google.gson.Gson;
+import websocket.messages.ServerMessage;
+
 public class WebSocketMessageHandler {
+
+  private static final Gson gson = new Gson();
 
   /**
    * Processes a message received from the WebSocket server.
@@ -9,17 +14,25 @@ public class WebSocketMessageHandler {
   public static void handleMessage(String message) {
     System.out.println("Processing message: " + message);
 
-    // Parse and handle the message based on its type
-    if (message.contains("update")) {
-      // Handle game updates (real-time chessboard state)
-      System.out.println("Game update received: " + message);
-      // Example: You could parse and apply the update to the game state here
-    } else if (message.contains("notification")) {
-      // Handle server notifications
-      System.out.println("Notification: " + message);
-    } else {
-      // Handle unknown or error messages
-      System.err.println("Unknown message type: " + message);
+    // Parse the message
+    ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+
+    // Handle the message based on its type
+    switch (serverMessage.getServerMessageType()) {
+      case LOAD_GAME:
+        // Handle game load logic
+        System.out.println("Game loaded successfully.");
+        break;
+      case NOTIFICATION:
+        // Handle notifications
+        System.out.println("Notification: " + serverMessage.getMessage());
+        break;
+      case ERROR:
+        // Handle errors
+        System.err.println("Error: " + serverMessage.getErrorMessage());
+        break;
+      default:
+        System.err.println("Unknown server message type: " + serverMessage.getServerMessageType());
     }
   }
 }

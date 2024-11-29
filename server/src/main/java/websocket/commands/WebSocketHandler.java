@@ -1,150 +1,180 @@
 package websocket.commands;
 
-import websocket.commands.UserGameCommand;
+import org.eclipse.jetty.websocket.api.Session;
+import server.WebSocketServer;
 import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessage.ServerMessageType;
+import websocket.GameState;
+import chess.ChessMove;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Handles incoming WebSocket commands and processes them to manage gameplay logic.
+ * Handles WebSocket commands and manages game state interactions.
  */
 public class WebSocketHandler {
-  private final Map<Integer, Set<String>> gamePlayers = new ConcurrentHashMap<>();
-  private final Map<Integer, Set<String>> gameObservers = new ConcurrentHashMap<>();
-  private final Map<String, String> authTokenToUser = new ConcurrentHashMap<>();
+  private final Map<Integer, GameState> gameStates = new ConcurrentHashMap<>(); // gameID -> GameState
+  private final Map<String, String> authTokenToUser = new ConcurrentHashMap<>(); // authToken -> username
+  private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
+  private final WebSocketServer server;
 
-  /**
-   * Handle a CONNECT command.
-   *
-   * @param command The UserGameCommand containing connection details.
-   * @return A ServerMessage indicating success or failure.
-   */
-  public ServerMessage handleConnect(UserGameCommand command) {
-    // Validate the auth token
-    if (!isValidAuthToken(command.getAuthToken())) {
-      return new ServerMessage(ServerMessageType.ERROR);
-    }
-
-    // Validate the game ID
-    if (!gameExists(command.getGameID())) {
-      return new ServerMessage(ServerMessageType.ERROR);
-    }
-
-    // Determine if the user is a player or an observer
-    boolean isPlayer = addPlayerToGame(command.getAuthToken(), command.getGameID());
-    if (!isPlayer) {
-      addObserverToGame(command.getAuthToken(), command.getGameID());
-    }
-
-    // Create a LOAD_GAME message
-    ServerMessage loadGameMessage = new ServerMessage(ServerMessageType.LOAD_GAME);
-
-    // Notify other users
-    String userName = getUserNameFromAuthToken(command.getAuthToken());
-    broadcastNotification(command.getGameID(), userName + " joined the game");
-
-    return loadGameMessage;
+  public WebSocketHandler(WebSocketServer server) {
+    this.server = server;
   }
 
   /**
-   * Handle other commands like MAKE_MOVE, LEAVE, RESIGN.
+   * Handles a WebSocket command based on its type.
    *
-   * @param command The UserGameCommand containing the command type.
-   * @return A ServerMessage indicating the result.
+   * @param command The command to handle.
+   * @param session The WebSocket session of the sender.
+   * @return The ServerMessage to send back to the client.
    */
-  public ServerMessage handleCommand(UserGameCommand command) {
+  public ServerMessage handleCommand(UserGameCommand command, Session session) {
     switch (command.getCommandType()) {
-      case MAKE_MOVE:
-        return handleMakeMove(command);
+      case CONNECT:
+        return handleConnect(command, session);
+      /*case MAKE_MOVE:
+        return handleMakeMove(command);*/
       case LEAVE:
         return handleLeave(command);
       case RESIGN:
         return handleResign(command);
       default:
-        return new ServerMessage(ServerMessageType.ERROR);
+        return new ServerMessage(ServerMessageType.ERROR, "Unknown command type");
     }
   }
 
-  private ServerMessage handleMakeMove(UserGameCommand command) {
-    // Placeholder for making a move in the game
-    if (!isValidAuthToken(command.getAuthToken()) || !gameExists(command.getGameID())) {
-      return new ServerMessage(ServerMessageType.ERROR);
+  public ServerMessage handleConnect(UserGameCommand command, Session session) {
+    int gameID = command.getGameID();
+    String authToken = command.getAuthToken();
+
+
+    // Ensure the session is mapped to the authToken
+    server.addAuthTokenSessionMapping(authToken, session);
+
+    // Automatically create the game if it doesn't exist
+    gameStates.computeIfAbsent(gameID, id -> new GameState(id));
+
+    GameState gameState = gameStates.get(gameID);
+
+    // Assign a default username
+    String userName = "Player";
+
+    // Determine if the user should be added as a player or observer
+    boolean addedAsPlayer = gameState.addPlayer(authToken, userName);
+
+    // If unable to add as a player, add as an observer
+    if (!addedAsPlayer) {
+      gameState.addObserver(authToken);
     }
-    // Assume a valid move is made
-    broadcastNotification(command.getGameID(), "A move was made");
-    return new ServerMessage(ServerMessageType.NOTIFICATION);
+
+    // Build and return the full game state to the connecting user
+    ServerMessage response = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);
+
+    // Notify other users in the game about the new connection
+    String notificationMessage = userName + " has joined the game.";
+    server.broadcastNotification(gameID, notificationMessage, authToken);
+
+    return response;
   }
+
+
+
+  /*private ServerMessage handleMakeMove(UserGameCommand command) {
+    int gameID = command.getGameID();
+    String authToken = command.getAuthToken();
+    ChessMove move = command.getMove();
+
+    // Check if the game exists
+    if (!gameStates.containsKey(gameID)) {
+      return new ServerMessage(ServerMessageType.ERROR, "Game not found");
+    }
+
+    GameState gameState = gameStates.get(gameID);
+
+    // Make the move in the game state
+    GameState.MoveResult moveResult = gameState.makeMove(authToken, move);
+
+    if (moveResult.isSuccessful()) {
+      // Broadcast the updated game state to all players and observers
+      server.broadcastNotification(gameID, moveResult.getMoveDescription(), null);
+      return new ServerMessage(ServerMessageType.NOTIFICATION, moveResult.getMoveDescription());
+    } else {
+      return new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
+    }
+  }*/
 
   private ServerMessage handleLeave(UserGameCommand command) {
-    // Remove the user from the game (either player or observer)
-    removeUserFromGame(command.getAuthToken(), command.getGameID());
-    broadcastNotification(command.getGameID(), "A user left the game");
-    return new ServerMessage(ServerMessageType.NOTIFICATION);
+    int gameID = command.getGameID();
+    String authToken = command.getAuthToken();
+
+    // Check if the game exists
+    if (!gameStates.containsKey(gameID)) {
+      return new ServerMessage(ServerMessageType.ERROR, "Game not found");
+    }
+
+    GameState gameState = gameStates.get(gameID);
+
+    // Remove the user from the game
+    boolean removed = gameState.removePlayer(authToken) || gameState.removeObserver(authToken);
+
+    if (removed) {
+      // Notify others in the game
+      server.broadcastNotification(gameID, authTokenToUser.get(authToken) + " has left the game.", authToken);
+      return new ServerMessage(ServerMessageType.NOTIFICATION, "You have left the game.");
+    } else {
+      return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
+    }
   }
 
   private ServerMessage handleResign(UserGameCommand command) {
-    // Placeholder for resign logic
-    broadcastNotification(command.getGameID(), "A player resigned");
-    return new ServerMessage(ServerMessageType.NOTIFICATION);
-  }
+    int gameID = command.getGameID();
+    String authToken = command.getAuthToken();
 
-  // Helper methods
-
-  private boolean isValidAuthToken(String authToken) {
-    // Implement actual validation logic (e.g., check database or cache)
-    return authTokenToUser.containsKey(authToken);
-  }
-
-  private boolean gameExists(int gameID) {
-    return gamePlayers.containsKey(gameID) || gameObservers.containsKey(gameID);
-  }
-
-  private boolean addPlayerToGame(String authToken, int gameID) {
-    // Add the user as a player if there's an open spot
-    gamePlayers.putIfAbsent(gameID, ConcurrentHashMap.newKeySet());
-    Set<String> players = gamePlayers.get(gameID);
-    if (players.size() < 2) { // Assuming a 2-player game
-      players.add(authToken);
-      return true;
+    // Check if the game exists
+    if (!gameStates.containsKey(gameID)) {
+      return new ServerMessage(ServerMessageType.ERROR, "Game not found");
     }
-    return false; // Game is full
-  }
 
-  private void addObserverToGame(String authToken, int gameID) {
-    gameObservers.putIfAbsent(gameID, ConcurrentHashMap.newKeySet());
-    gameObservers.get(gameID).add(authToken);
-  }
+    GameState gameState = gameStates.get(gameID);
 
-  private void removeUserFromGame(String authToken, int gameID) {
-    if (gamePlayers.containsKey(gameID)) {
-      gamePlayers.get(gameID).remove(authToken);
-    }
-    if (gameObservers.containsKey(gameID)) {
-      gameObservers.get(gameID).remove(authToken);
+    // Resign the player
+    boolean resigned = gameState.removePlayer(authToken);
+
+    if (resigned) {
+      // Mark the game as over if only one player remains
+      if (gameState.getPlayers().size() == 1) {
+        gameState.isGameOver();
+      }
+
+      // Notify others in the game
+      server.broadcastNotification(gameID, authTokenToUser.get(authToken) + " has resigned.", authToken);
+      return new ServerMessage(ServerMessageType.NOTIFICATION, "You have resigned.");
+    } else {
+      return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
     }
   }
 
-  private String getUserNameFromAuthToken(String authToken) {
-    // Fetch the username associated with the auth token
-    return authTokenToUser.getOrDefault(authToken, "Unknown User");
+
+  public void removeUserFromAllGames(String authToken) {
+    gameStates.values().forEach(gameState -> {
+      gameState.removePlayer(authToken);
+      gameState.removeObserver(authToken);
+    });
+    authTokenToSession.remove(authToken);
   }
 
-  private void broadcastNotification(int gameID, String message) {
-    // Notify all players and observers in the game
-    Set<String> recipients = ConcurrentHashMap.newKeySet();
-    if (gamePlayers.containsKey(gameID)) {
-      recipients.addAll(gamePlayers.get(gameID));
-    }
-    if (gameObservers.containsKey(gameID)) {
-      recipients.addAll(gameObservers.get(gameID));
+  public Set<String> getRecipientsForGame(int gameID) {
+    if (!gameStates.containsKey(gameID)) {
+      return Set.of(); // Return an empty set if the game doesn't exist
     }
 
-    for (String authToken : recipients) {
-      // This method would need access to the actual WebSocket sessions
-      System.out.println("Broadcast to " + authToken + ": " + message);
-    }
+    GameState gameState = gameStates.get(gameID);
+    Set<String> recipients = new HashSet<>(gameState.getPlayers().keySet());
+    recipients.addAll(gameState.getObservers());
+    return recipients;
   }
 }

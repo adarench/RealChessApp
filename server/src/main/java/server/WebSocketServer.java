@@ -1,16 +1,14 @@
 package server;
 
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 import websocket.commands.WebSocketHandler;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,93 +18,84 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketServer {
 
   private final Gson gson = new Gson();
-  private final WebSocketHandler handler = new WebSocketHandler();
-  private static final ConcurrentHashMap<Session, String> activeSessions = new ConcurrentHashMap<>();
+  private final WebSocketHandler handler;
+  private final ConcurrentHashMap<Session, String> sessionToAuthToken = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, Session> authTokenToSession = new ConcurrentHashMap<>();
 
-  /**
-   * Called when a new client connects to the WebSocket server.
-   *
-   * @param session The session associated with the connected client.
-   */
-  @OnWebSocketConnect
-  public void onConnect(Session session) {
-    if (session == null) {
-      System.err.println("Error: Null session received in onConnect");
-      return;
-    }
-
-    System.out.println("New connection: " + session);
-    activeSessions.put(session, null);
-
-    // Send a welcome message or acknowledgement to the client
-    sendMessage(session, gson.toJson(new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION)));
+  public WebSocketServer() {
+    this.handler = new WebSocketHandler(this);
   }
 
+  @OnWebSocketConnect
+  public void onConnect(Session session) {
+    System.out.println("New connection: " + session);
+  }
 
-
-  /**
-   * Called when the server receives a message from a client.
-   *
-   * @param session The session that sent the message.
-   * @param message The message content as a string.
-   */
   @OnWebSocketMessage
   public void onMessage(Session session, String message) {
     System.out.println("Received message: " + message);
 
     try {
       UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
-
-      ServerMessage response;
-      switch (command.getCommandType()) {
-        case CONNECT -> {
-          response = handler.handleConnect(command);
-
-          // If successful, associate the session with the authToken or game
-          if (response.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
-            activeSessions.put(session, command.getAuthToken());
-          }
-        }
-        default -> response = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
-      }
-
+      ServerMessage response = handler.handleCommand(command, session);
       sendMessage(session, gson.toJson(response));
     } catch (Exception e) {
       e.printStackTrace();
-      sendMessage(session, gson.toJson(new ServerMessage(ServerMessage.ServerMessageType.ERROR)));
+      sendMessage(session, gson.toJson(new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Invalid message format")));
     }
   }
 
-
-
-  /**
-   * Called when a client disconnects from the WebSocket server.
-   *
-   * @param session    The session associated with the disconnected client.
-   * @param statusCode The WebSocket status code.
-   * @param reason     The reason for disconnection.
-   */
   @OnWebSocketClose
   public void onClose(Session session, int statusCode, String reason) {
     System.out.println("Connection closed: " + session + ", reason: " + reason);
-    activeSessions.remove(session); // Remove the session from the tracking map
+    String authToken = sessionToAuthToken.remove(session);
+    if (authToken != null) {
+      authTokenToSession.remove(authToken);
+      handler.removeUserFromAllGames(authToken);
+    }
   }
 
-  /**
-   * Sends a message to a specific client.
-   *
-   * @param session The session of the client.
-   * @param message The message to send.
-   */
-  private void sendMessage(Session session, String message) {
+  @OnWebSocketError
+  public void onError(Session session, Throwable error) {
+    System.err.println("WebSocket Error for session " + session + ": " + error.getMessage());
+    error.printStackTrace();
+  }
+
+  public void sendMessage(Session session, String message) {
     try {
-      if (session.isOpen()) {
+      if (session != null && session.isOpen()) {
         session.getRemote().sendString(message);
+      } else {
+        System.err.println("Session is closed or null. Cannot send message: " + message);
       }
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
+  public void broadcastNotification(int gameID, String message, String excludeAuthToken) {
+    Set<String> recipients = handler.getRecipientsForGame(gameID);
+    if (excludeAuthToken != null) {
+      recipients.remove(excludeAuthToken);
+    }
+    ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+    for (String authToken : recipients) {
+      Session recipientSession = authTokenToSession.get(authToken);
+      if (recipientSession != null && recipientSession.isOpen()) {
+        sendMessage(recipientSession, gson.toJson(notification));
+      }
+    }
+  }
 
+  public void addAuthTokenSessionMapping(String authToken, Session session) {
+    sessionToAuthToken.put(session, authToken);
+    authTokenToSession.put(authToken, session);
+  }
+
+  public void removeAuthTokenSessionMapping(String authToken) {
+    Session session = authTokenToSession.remove(authToken);
+    if (session != null) {
+      sessionToAuthToken.remove(session);
+    }
+  }
 }
