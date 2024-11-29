@@ -38,7 +38,9 @@ public class WebSocketServer {
     try {
       UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
       ServerMessage response = handler.handleCommand(command, session);
-      sendMessage(session, gson.toJson(response));
+      if (response != null) {
+        sendMessage(session, gson.toJson(response));
+      }
     } catch (Exception e) {
       e.printStackTrace();
       sendMessage(session, gson.toJson(new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Invalid message format")));

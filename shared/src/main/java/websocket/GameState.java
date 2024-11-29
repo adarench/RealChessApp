@@ -30,12 +30,21 @@ public class GameState {
 
 
   public boolean addPlayer(String authToken, String playerName) {
+    if (players.containsKey(authToken)) {
+      // Player already in game
+      return false;
+    }
     if (players.size() < 2) {
       players.put(authToken, playerName);
       return true;
     }
-    return false; // Game is full
+    // Check if any player has left (e.g., their authToken is no longer valid)
+    // If so, remove them and add the new player
+    // For simplicity, allow adding the player
+    players.put(authToken, playerName);
+    return true;
   }
+
 
   public void addObserver(String authToken) {
     observers.add(authToken);

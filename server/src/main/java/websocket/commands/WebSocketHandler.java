@@ -131,10 +131,18 @@ public class WebSocketHandler {
     boolean removed = gameState.removePlayer(authToken) || gameState.removeObserver(authToken);
 
     if (removed) {
+
+      gameState.removePlayer(authToken);
+
+      // If no players are left, remove the GameState
+      if (gameState.getPlayers().isEmpty()) {
+        gameStates.remove(gameID);
+      }
       // Notify others in the game
       String notificationMessage = userName + " has left the game.";
       server.broadcastNotification(gameID, notificationMessage, authToken);
-      return new ServerMessage(ServerMessageType.NOTIFICATION, "You have left the game.");
+
+      return null;
     } else {
       return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
     }
