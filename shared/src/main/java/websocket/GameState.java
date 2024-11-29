@@ -10,11 +10,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Collection;
+import chess.InvalidMoveException;
+
 
 public class GameState {
   private final int gameID;
   private final ChessGame chessGame; // The chess game logic
   private final Map<String, String> players = new HashMap<>(); // authToken -> playerName
+
+  private final Map<String, ChessGame.TeamColor> playerColors = new HashMap<>(); // authToken -> TeamColor
+
   private final Set<String> observers = new HashSet<>();
   private boolean gameOver;
 
@@ -45,6 +50,11 @@ public class GameState {
     return true;
   }
 
+  public void assignPlayerTeamColor(String authToken, ChessGame.TeamColor teamColor) {
+    playerColors.put(authToken, teamColor);
+  }
+
+
 
   public void addObserver(String authToken) {
     observers.add(authToken);
@@ -58,7 +68,7 @@ public class GameState {
     return observers.remove(authToken);
   }
 
-  /*public MoveResult makeMove(String authToken, ChessMove move) {
+  public MoveResult makeMove(String authToken, ChessMove move) {
     if (gameOver) {
       return new MoveResult(false, "Game is already over");
     }
@@ -68,65 +78,34 @@ public class GameState {
       return new MoveResult(false, "Player is not part of the game");
     }
 
+    // Get the player's team color
+    ChessGame.TeamColor playerColor = playerColors.get(authToken);
+    if (playerColor == null) {
+      return new MoveResult(false, "Player's team color is not assigned");
+    }
+
     // Validate if it's the player's turn
-    ChessGame.TeamColor playerColor = players.get(authToken);
     if (chessGame.getTeamTurn() != playerColor) {
       return new MoveResult(false, "It is not your turn");
     }
 
-    // Get the piece at the starting position
-    ChessPiece piece = chessGame.getBoard().getPiece(move.getStartPosition());
-    if (piece == null) {
-      return new MoveResult(false, "No piece at the starting position");
+    try {
+      // Use your fully implemented ChessGame to make the move
+      chessGame.makeMove(move);
+    } catch (InvalidMoveException e) {
+      return new MoveResult(false, e.getMessage());
     }
-
-    // Validate the piece belongs to the player
-    if (piece.getTeamColor() != playerColor) {
-      return new MoveResult(false, "The selected piece does not belong to you");
-    }
-
-    // Get all valid moves for the piece
-    Collection<ChessMove> validMoves = piece.pieceMoves(chessGame.getBoard(), move.getStartPosition());
-    boolean moveIsValid = validMoves.stream()
-            .anyMatch(validMove -> validMove.getEndPosition().equals(move.getEndPosition()));
-
-    if (!moveIsValid) {
-      return new MoveResult(false, "The move is not valid for this piece");
-    }
-
-    // Execute the move
-    ChessBoard board = chessGame.getBoard();
-    board.addPiece(move.getEndPosition(), piece); // Place the piece in the new position
-    board.addPiece(move.getStartPosition(), null); // Clear the starting position
-
-    // Handle pawn promotion
-    if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-      if ((piece.getTeamColor() == ChessGame.TeamColor.WHITE && move.getEndPosition().getRow() == 8) ||
-              (piece.getTeamColor() == ChessGame.TeamColor.BLACK && move.getEndPosition().getRow() == 1)) {
-        ChessPiece.PieceType promotionType = move.getPromotionPiece() != null
-                ? move.getPromotionPiece()
-                : ChessPiece.PieceType.QUEEN; // Default to queen if no type specified
-        ChessPiece promotedPiece = new ChessPiece(piece.getTeamColor(), promotionType);
-        board.addPiece(move.getEndPosition(), promotedPiece);
-      }
-    }
-
-    // Switch turn
-    chessGame.setTeamTurn(playerColor == ChessGame.TeamColor.WHITE
-            ? ChessGame.TeamColor.BLACK
-            : ChessGame.TeamColor.WHITE);
 
     // Check for game over conditions
-    if (chessGame.isInCheckmate(ChessGame.TeamColor.WHITE) || chessGame.isInCheckmate(ChessGame.TeamColor.BLACK)) {
+    // Check for game over conditions
+    if (chessGame.isInCheckmate(playerColor) || chessGame.isInStalemate(playerColor)) {
       gameOver = true;
-      return new MoveResult(true, "Move successful. Game over: Checkmate!");
-    } else if (chessGame.isInStalemate(ChessGame.TeamColor.WHITE) || chessGame.isInStalemate(ChessGame.TeamColor.BLACK)) {
-      gameOver = true;
-      return new MoveResult(true, "Move successful. Game over: Stalemate!");
+      return new MoveResult(true, "Move successful. Game over!");
     }
 
     return new MoveResult(true, "Move executed successfully");
-  }*/
+  }
+
 
 
 

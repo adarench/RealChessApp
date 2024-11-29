@@ -89,6 +89,7 @@ public class WebSocketServer {
     }
   }
 
+
   public void addAuthTokenSessionMapping(String authToken, Session session) {
     sessionToAuthToken.put(session, authToken);
     authTokenToSession.put(authToken, session);
@@ -100,4 +101,16 @@ public class WebSocketServer {
       sessionToAuthToken.remove(session);
     }
   }
+  public Session getSessionByAuthToken(String authToken) {
+    return authTokenToSession.get(authToken);
+  }
+
+  public void sendMessageToAuthToken(String authToken, String message) {
+    Session session = authTokenToSession.get(authToken);
+    if (session != null && session.isOpen()) {
+      sendMessage(session, message);
+    }
+  }
+
+
 }

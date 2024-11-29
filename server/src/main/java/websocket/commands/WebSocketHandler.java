@@ -1,5 +1,6 @@
 package websocket.commands;
 
+import chess.InvalidMoveException;
 import org.eclipse.jetty.websocket.api.Session;
 import server.WebSocketServer;
 import websocket.GameState;
@@ -10,6 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import com.google.gson.Gson;
+import chess.ChessGame;
+
+
 
 // Import your DAOs and data models
 import dataaccess.AuthDAO;
@@ -17,8 +22,10 @@ import dataaccess.GameDAO;
 import dataaccess.DataAccessException;
 import model.AuthData;
 import model.GameData;
+import chess.ChessMove;
 
 public class WebSocketHandler {
+  private final Gson gson = new Gson();
   private final Map<Integer, GameState> gameStates = new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
@@ -37,8 +44,8 @@ public class WebSocketHandler {
     switch (command.getCommandType()) {
       case CONNECT:
         return handleConnect(command, session);
-      // case MAKE_MOVE:
-      //     return handleMakeMove(command);
+      case MAKE_MOVE:
+        return handleMakeMove(command);
       case LEAVE:
         return handleLeave(command);
       case RESIGN:
@@ -91,6 +98,18 @@ public class WebSocketHandler {
     // If unable to add as a player, add as an observer
     if (!addedAsPlayer) {
       gameState.addObserver(authToken);
+    }
+
+
+    ChessGame.TeamColor teamColor = null;
+    if (userName.equals(gameData.whiteUsername())) {
+      teamColor = ChessGame.TeamColor.WHITE;
+    } else if (userName.equals(gameData.blackUsername())) {
+      teamColor = ChessGame.TeamColor.BLACK;
+    }
+
+    if (teamColor != null) {
+      gameState.assignPlayerTeamColor(authToken, teamColor);
     }
 
     // Build and return the full game state to the connecting user
@@ -208,4 +227,60 @@ public class WebSocketHandler {
     recipients.addAll(gameState.getObservers());
     return recipients;
   }
+
+  private ServerMessage handleMakeMove(UserGameCommand command) {
+    int gameID = command.getGameID();
+    String authToken = command.getAuthToken();
+    ChessMove move = command.getMove();
+
+    // Validate the authToken using AuthDAO
+    String userName;
+    try {
+      AuthData authData = authDAO.getAuth(authToken);
+      if (authData == null) {
+        return new ServerMessage(ServerMessageType.ERROR, "Invalid auth token");
+      }
+      userName = authData.username();
+    } catch (DataAccessException e) {
+      e.printStackTrace();
+      return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
+    }
+
+    // Check if the game exists
+    if (!gameStates.containsKey(gameID)) {
+      return new ServerMessage(ServerMessageType.ERROR, "Game not found");
+    }
+
+    GameState gameState = gameStates.get(gameID);
+
+    // Attempt to make the move using GameState
+    GameState.MoveResult moveResult = gameState.makeMove(authToken, move);
+
+    if (!moveResult.isSuccessful()) {
+      // Return an error message to the client
+      return new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
+    }
+
+    // Create the LOAD_GAME message with the updated game state
+    ServerMessage gameStateMessage = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);
+
+    // Send the message to other players and observers
+    Set<String> recipients = getRecipientsForGame(gameID);
+    recipients.remove(authToken); // Exclude the moving player
+
+    for (String recipientAuthToken : recipients) {
+      Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
+      if (recipientSession != null && recipientSession.isOpen()) {
+        server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
+      }
+    }
+
+    // Return the updated game state to the moving player
+    return gameStateMessage;
+  }
+
+
+
+
+
 }
