@@ -92,15 +92,7 @@ public class WebSocketHandler {
 
     GameState gameState = gameStates.get(gameID);
 
-    // Determine if the user should be added as a player or observer
-    boolean addedAsPlayer = gameState.addPlayer(authToken, userName);
-
-    // If unable to add as a player, add as an observer
-    if (!addedAsPlayer) {
-      gameState.addObserver(authToken);
-    }
-
-
+    // Determine the player's team color based on GameData
     ChessGame.TeamColor teamColor = null;
     if (userName.equals(gameData.whiteUsername())) {
       teamColor = ChessGame.TeamColor.WHITE;
@@ -108,8 +100,14 @@ public class WebSocketHandler {
       teamColor = ChessGame.TeamColor.BLACK;
     }
 
+    boolean addedAsPlayer = false;
     if (teamColor != null) {
+      // Add the player as they are assigned in the game
+      addedAsPlayer = gameState.addPlayer(authToken, userName);
       gameState.assignPlayerTeamColor(authToken, teamColor);
+    } else {
+      // Add the user as an observer
+      gameState.addObserver(authToken);
     }
 
     // Build and return the full game state to the connecting user

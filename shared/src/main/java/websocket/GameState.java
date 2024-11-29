@@ -43,10 +43,7 @@ public class GameState {
       players.put(authToken, playerName);
       return true;
     }
-    // Check if any player has left (e.g., their authToken is no longer valid)
-    // If so, remove them and add the new player
-    // For simplicity, allow adding the player
-    players.put(authToken, playerName);
+
     return true;
   }
 
@@ -96,11 +93,18 @@ public class GameState {
       return new MoveResult(false, e.getMessage());
     }
 
-    // Check for game over conditions
-    // Check for game over conditions
-    if (chessGame.isInCheckmate(playerColor) || chessGame.isInStalemate(playerColor)) {
+    // Determine the opponent's team color
+    ChessGame.TeamColor opponentColor = (playerColor == ChessGame.TeamColor.WHITE)
+            ? ChessGame.TeamColor.BLACK
+            : ChessGame.TeamColor.WHITE;
+
+    // Check for game over conditions on the opponent
+    if (chessGame.isInCheckmate(opponentColor)) {
       gameOver = true;
-      return new MoveResult(true, "Move successful. Game over!");
+      return new MoveResult(true, "Move successful. Checkmate!");
+    } else if (chessGame.isInStalemate(opponentColor)) {
+      gameOver = true;
+      return new MoveResult(true, "Move successful. Stalemate!");
     }
 
     return new MoveResult(true, "Move executed successfully");
