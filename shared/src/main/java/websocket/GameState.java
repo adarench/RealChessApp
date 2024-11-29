@@ -24,6 +24,11 @@ public class GameState {
     this.gameOver = false;
   }
 
+  public void setGameOver(boolean gameOver) {
+    this.gameOver = gameOver;
+  }
+
+
   public boolean addPlayer(String authToken, String playerName) {
     if (players.size() < 2) {
       players.put(authToken, playerName);

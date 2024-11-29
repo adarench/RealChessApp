@@ -2,42 +2,43 @@ package websocket.commands;
 
 import org.eclipse.jetty.websocket.api.Session;
 import server.WebSocketServer;
+import websocket.GameState;
 import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessage.ServerMessageType;
-import websocket.GameState;
-import chess.ChessMove;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Handles WebSocket commands and manages game state interactions.
- */
+// Import your DAOs and data models
+import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
+import dataaccess.DataAccessException;
+import model.AuthData;
+import model.GameData;
+
 public class WebSocketHandler {
   private final Map<Integer, GameState> gameStates = new ConcurrentHashMap<>(); // gameID -> GameState
-  private final Map<String, String> authTokenToUser = new ConcurrentHashMap<>(); // authToken -> username
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
 
+  // Add DAO references
+  private final AuthDAO authDAO;
+  private final GameDAO gameDAO;
+
   public WebSocketHandler(WebSocketServer server) {
     this.server = server;
+    this.authDAO = new AuthDAO(); // Instantiate the DAO
+    this.gameDAO = new GameDAO(); // Instantiate the DAO
   }
 
-  /**
-   * Handles a WebSocket command based on its type.
-   *
-   * @param command The command to handle.
-   * @param session The WebSocket session of the sender.
-   * @return The ServerMessage to send back to the client.
-   */
   public ServerMessage handleCommand(UserGameCommand command, Session session) {
     switch (command.getCommandType()) {
       case CONNECT:
         return handleConnect(command, session);
-      /*case MAKE_MOVE:
-        return handleMakeMove(command);*/
+      // case MAKE_MOVE:
+      //     return handleMakeMove(command);
       case LEAVE:
         return handleLeave(command);
       case RESIGN:
@@ -51,17 +52,38 @@ public class WebSocketHandler {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
 
+    // Validate the authToken using AuthDAO
+    String userName;
+    try {
+      AuthData authData = authDAO.getAuth(authToken);
+      if (authData == null) {
+        return new ServerMessage(ServerMessageType.ERROR, "Invalid auth token");
+      }
+      userName = authData.username();
+    } catch (DataAccessException e) {
+      e.printStackTrace();
+      return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
+    }
 
     // Ensure the session is mapped to the authToken
     server.addAuthTokenSessionMapping(authToken, session);
 
-    // Automatically create the game if it doesn't exist
+    // Check if the game exists using GameDAO
+    GameData gameData;
+    try {
+      gameData = gameDAO.getGame(gameID);
+      if (gameData == null) {
+        return new ServerMessage(ServerMessageType.ERROR, "Game not found");
+      }
+    } catch (DataAccessException e) {
+      e.printStackTrace();
+      return new ServerMessage(ServerMessageType.ERROR, "Server error during game retrieval");
+    }
+
+    // Synchronize gameStates map
     gameStates.computeIfAbsent(gameID, id -> new GameState(id));
 
     GameState gameState = gameStates.get(gameID);
-
-    // Assign a default username
-    String userName = "Player";
 
     // Determine if the user should be added as a player or observer
     boolean addedAsPlayer = gameState.addPlayer(authToken, userName);
@@ -81,35 +103,22 @@ public class WebSocketHandler {
     return response;
   }
 
-
-
-  /*private ServerMessage handleMakeMove(UserGameCommand command) {
-    int gameID = command.getGameID();
-    String authToken = command.getAuthToken();
-    ChessMove move = command.getMove();
-
-    // Check if the game exists
-    if (!gameStates.containsKey(gameID)) {
-      return new ServerMessage(ServerMessageType.ERROR, "Game not found");
-    }
-
-    GameState gameState = gameStates.get(gameID);
-
-    // Make the move in the game state
-    GameState.MoveResult moveResult = gameState.makeMove(authToken, move);
-
-    if (moveResult.isSuccessful()) {
-      // Broadcast the updated game state to all players and observers
-      server.broadcastNotification(gameID, moveResult.getMoveDescription(), null);
-      return new ServerMessage(ServerMessageType.NOTIFICATION, moveResult.getMoveDescription());
-    } else {
-      return new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
-    }
-  }*/
-
   private ServerMessage handleLeave(UserGameCommand command) {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
+
+    // Validate the authToken using AuthDAO
+    String userName;
+    try {
+      AuthData authData = authDAO.getAuth(authToken);
+      if (authData == null) {
+        return new ServerMessage(ServerMessageType.ERROR, "Invalid auth token");
+      }
+      userName = authData.username();
+    } catch (DataAccessException e) {
+      e.printStackTrace();
+      return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
+    }
 
     // Check if the game exists
     if (!gameStates.containsKey(gameID)) {
@@ -123,7 +132,8 @@ public class WebSocketHandler {
 
     if (removed) {
       // Notify others in the game
-      server.broadcastNotification(gameID, authTokenToUser.get(authToken) + " has left the game.", authToken);
+      String notificationMessage = userName + " has left the game.";
+      server.broadcastNotification(gameID, notificationMessage, authToken);
       return new ServerMessage(ServerMessageType.NOTIFICATION, "You have left the game.");
     } else {
       return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
@@ -133,6 +143,19 @@ public class WebSocketHandler {
   private ServerMessage handleResign(UserGameCommand command) {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
+
+    // Validate the authToken using AuthDAO
+    String userName;
+    try {
+      AuthData authData = authDAO.getAuth(authToken);
+      if (authData == null) {
+        return new ServerMessage(ServerMessageType.ERROR, "Invalid auth token");
+      }
+      userName = authData.username();
+    } catch (DataAccessException e) {
+      e.printStackTrace();
+      return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
+    }
 
     // Check if the game exists
     if (!gameStates.containsKey(gameID)) {
@@ -146,18 +169,18 @@ public class WebSocketHandler {
 
     if (resigned) {
       // Mark the game as over if only one player remains
-      if (gameState.getPlayers().size() == 1) {
-        gameState.isGameOver();
+      if (gameState.getPlayers().size() <= 1) {
+        gameState.setGameOver(true);
       }
 
       // Notify others in the game
-      server.broadcastNotification(gameID, authTokenToUser.get(authToken) + " has resigned.", authToken);
+      String notificationMessage = userName + " has resigned.";
+      server.broadcastNotification(gameID, notificationMessage, authToken);
       return new ServerMessage(ServerMessageType.NOTIFICATION, "You have resigned.");
     } else {
       return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
     }
   }
-
 
   public void removeUserFromAllGames(String authToken) {
     gameStates.values().forEach(gameState -> {
