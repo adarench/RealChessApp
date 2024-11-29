@@ -1,17 +1,19 @@
 package ui;
 import java.util.Scanner;
+import websocket.WebSocketClient;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class Main {
 
   private static ServerFacade serverFacade;
-
+  private static WebSocketClient webSocketClient;
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
   public static void main(String[] args) {
     String serverUrl = "http://localhost:8080";
+    String webSocketUrl = "ws://localhost:8080/ws";
     if (serverUrl == null) {
       System.err.println("Failed to discover the server. Ensure it is running.");
       return;
@@ -19,6 +21,14 @@ public class Main {
 
     System.out.println("Connected to server at: " + serverUrl);
     serverFacade = new ServerFacade(serverUrl);
+
+    // Initialize WebSocketClient
+    webSocketClient = new WebSocketClient();
+    try {
+      webSocketClient.connect(webSocketUrl);
+    } catch (Exception e) {
+      System.err.println("Failed to connect to WebSocket server: " + e.getMessage());
+    }
 
     showPreloginMenu();
   }
@@ -190,8 +200,31 @@ public class Main {
     System.out.println(response);
     // Draw the chessboard only if the game was successfully observed
     if (response.startsWith("Observing game:")) {
-      drawChessBoard(true);
-      drawChessBoard(false);
+      try {
+        // Send a WebSocket CONNECT command for observing the game
+        String observeCommand = String.format(
+                "{\"commandType\": \"CONNECT\", \"authToken\": \"validToken\", \"gameID\": \"%s\"}", gameName
+        );
+        webSocketClient.sendMessage(observeCommand);
+
+        // Draw the chessboard for both perspectives
+        drawChessBoard(true);
+        drawChessBoard(false);
+
+        System.out.println("Waiting for real-time updates...");
+
+        // Start listening for real-time updates
+        while (true) {
+          String serverUpdate = webSocketClient.receiveMessage();
+          if (serverUpdate != null && serverUpdate.contains("update")) {
+            System.out.println("Game update received: " + serverUpdate);
+            drawChessBoard(true);
+            drawChessBoard(false);
+          }
+        }
+      } catch (Exception e) {
+        System.err.println("Error observing game via WebSocket: " + e.getMessage());
+      }
     }
   }
 
