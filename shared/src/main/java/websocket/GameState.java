@@ -29,6 +29,7 @@ public class GameState {
     this.gameOver = false;
   }
 
+
   public void setGameOver(boolean gameOver) {
     this.gameOver = gameOver;
   }
@@ -68,8 +69,13 @@ public class GameState {
   }
 
   public boolean removePlayer(String authToken) {
-    return players.remove(authToken) != null;
+    boolean removed = players.remove(authToken) != null;
+    if (removed) {
+      playerColors.remove(authToken); // Also remove the team color association
+    }
+    return removed;
   }
+
 
   public boolean removeObserver(String authToken) {
     return observers.remove(authToken);

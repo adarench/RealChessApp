@@ -156,13 +156,32 @@ public class WebSocketHandler {
     boolean removed = gameState.removePlayer(authToken) || gameState.removeObserver(authToken);
 
     if (removed) {
+      // Synchronize with the database
+      try {
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData != null) {
+          String updatedWhite = gameData.whiteUsername();
+          String updatedBlack = gameData.blackUsername();
 
-      gameState.removePlayer(authToken);
+          // Clear the corresponding spot
+          if (userName.equals(gameData.whiteUsername())) {
+            updatedWhite = null;
+          } else if (userName.equals(gameData.blackUsername())) {
+            updatedBlack = null;
+          }
+
+          gameDAO.updateGame(gameID, updatedWhite, updatedBlack);
+        }
+      } catch (DataAccessException e) {
+        e.printStackTrace();
+        return new ServerMessage(ServerMessageType.ERROR, "Failed to update game state in database.");
+      }
 
       // If no players are left, remove the GameState
       if (gameState.getPlayers().isEmpty()) {
         gameStates.remove(gameID);
       }
+
       // Notify others in the game
       String notificationMessage = userName + " has left the game.";
       server.broadcastNotification(gameID, notificationMessage, authToken);
@@ -196,6 +215,11 @@ public class WebSocketHandler {
     }
 
     GameState gameState = gameStates.get(gameID);
+
+    // Check if the game is already over
+    if (gameState.isGameOver()) {
+      return new ServerMessage(ServerMessageType.ERROR, "The game is already over. You cannot resign.");
+    }
 
     // Resign the player
     boolean resigned = gameState.removePlayer(authToken);
