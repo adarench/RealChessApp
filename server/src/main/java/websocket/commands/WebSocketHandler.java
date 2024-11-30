@@ -104,21 +104,29 @@ public class WebSocketHandler {
     if (teamColor != null) {
       // Add the player as they are assigned in the game
       addedAsPlayer = gameState.addPlayer(authToken, userName);
-      gameState.assignPlayerTeamColor(authToken, teamColor);
+      if (addedAsPlayer) {
+        gameState.assignPlayerTeamColor(authToken, teamColor); // Ensure team color is set
+      } else {
+        // If adding the player failed, return an error
+        return new ServerMessage(ServerMessageType.ERROR, "Failed to add player to the game");
+      }
     } else {
-      // Add the user as an observer
+      // Add the user as an observer if they are not assigned to a team
       gameState.addObserver(authToken);
     }
 
-    // Build and return the full game state to the connecting user
+// Build and return the full game state to the connecting user
     ServerMessage response = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);
 
     // Notify other users in the game about the new connection
     String notificationMessage = userName + " has joined the game.";
     server.broadcastNotification(gameID, notificationMessage, authToken);
+    System.out.println("Players in game: " + gameState.getPlayers());
+    System.out.println("Observers in game: " + gameState.getObservers());
 
     return response;
   }
+
 
   private ServerMessage handleLeave(UserGameCommand command) {
     int gameID = command.getGameID();
@@ -216,20 +224,26 @@ public class WebSocketHandler {
   }
 
   public Set<String> getRecipientsForGame(int gameID) {
+
     if (!gameStates.containsKey(gameID)) {
       return Set.of(); // Return an empty set if the game doesn't exist
     }
 
     GameState gameState = gameStates.get(gameID);
     Set<String> recipients = new HashSet<>(gameState.getPlayers().keySet());
+    System.out.println("Recipients for game " + gameID + ": " + recipients);
+
     recipients.addAll(gameState.getObservers());
     return recipients;
   }
 
   private ServerMessage handleMakeMove(UserGameCommand command) {
+
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
     ChessMove move = command.getMove();
+    System.out.println("handleMakeMove called for authToken: " + authToken);
+
 
     // Validate the authToken using AuthDAO
     String userName;
@@ -272,13 +286,18 @@ public class WebSocketHandler {
         server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
       }
     }
-
+    // Send a NOTIFICATION message about the move
+    String notificationMessage = "A move was made: " + move.getStartPosition() + " -> " + move.getEndPosition();
+    for (String recipientAuthToken : recipients) {
+      Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
+      if (recipientSession != null && recipientSession.isOpen()) {
+        ServerMessage notification = new ServerMessage(ServerMessageType.NOTIFICATION, notificationMessage);
+        server.sendMessage(recipientSession, gson.toJson(notification));
+      }
+    }
     // Return the updated game state to the moving player
     return gameStateMessage;
   }
-
-
-
 
 
 }

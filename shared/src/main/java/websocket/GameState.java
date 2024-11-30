@@ -47,6 +47,16 @@ public class GameState {
     return true;
   }
 
+  public Set<String> getAllParticipants() {
+    Set<String> participants = new HashSet<>(players.keySet());
+    participants.addAll(observers);
+    return participants;
+  }
+
+
+
+
+
   public void assignPlayerTeamColor(String authToken, ChessGame.TeamColor teamColor) {
     playerColors.put(authToken, teamColor);
   }
@@ -89,6 +99,7 @@ public class GameState {
     try {
       // Use your fully implemented ChessGame to make the move
       chessGame.makeMove(move);
+      chessGame.setTeamTurn((playerColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE);
     } catch (InvalidMoveException e) {
       return new MoveResult(false, e.getMessage());
     }
@@ -109,6 +120,9 @@ public class GameState {
 
     return new MoveResult(true, "Move executed successfully");
   }
+
+
+
 
 
 
