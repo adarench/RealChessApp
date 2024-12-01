@@ -120,12 +120,6 @@ public class GameHandler{
     }
   };
 
-
-
-
-
-
-
   //helper classes
   private static class CreateGameRequest {
     String gameName;

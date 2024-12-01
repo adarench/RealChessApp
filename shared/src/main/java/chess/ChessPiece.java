@@ -3,6 +3,7 @@ package chess;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Objects;
+import chess.ChessGame;
 
 /**
  * Represents a single chess piece
@@ -247,6 +248,25 @@ public class ChessPiece {
         ChessPiece that = (ChessPiece) o;
 
         return teamColor == that.teamColor && pieceType == that.pieceType;
+    }
+    @Override
+    public String toString() {
+        switch (this.pieceType) {
+            case PAWN:
+                return this.teamColor == ChessGame.TeamColor.WHITE ? "♙" : "♟";
+            case ROOK:
+                return this.teamColor == ChessGame.TeamColor.WHITE ? "♖" : "♜";
+            case KNIGHT:
+                return this.teamColor == ChessGame.TeamColor.WHITE ? "♘" : "♞";
+            case BISHOP:
+                return this.teamColor == ChessGame.TeamColor.WHITE ? "♗" : "♝";
+            case QUEEN:
+                return this.teamColor == ChessGame.TeamColor.WHITE ? "♕" : "♛";
+            case KING:
+                return this.teamColor == ChessGame.TeamColor.WHITE ? "♔" : "♚";
+            default:
+                return " "; // Empty square
+        }
     }
 
     @Override

@@ -88,9 +88,19 @@ public class WebSocketHandler {
     }
 
     // Synchronize gameStates map
-    gameStates.computeIfAbsent(gameID, id -> new GameState(id));
-
-    GameState gameState = gameStates.get(gameID);
+    GameState gameState = gameStates.computeIfAbsent(gameID, id -> {
+      GameState newGameState = new GameState(id);
+      // Initialize players and colors based on GameData
+      if (gameData.whiteUsername() != null) {
+        newGameState.addPlayer(authToken, gameData.whiteUsername());
+        newGameState.assignPlayerTeamColor(authToken, ChessGame.TeamColor.WHITE);
+      }
+      if (gameData.blackUsername() != null) {
+        newGameState.addPlayer(authToken, gameData.blackUsername());
+        newGameState.assignPlayerTeamColor(authToken, ChessGame.TeamColor.BLACK);
+      }
+      return newGameState;
+    });
 
     // Determine the player's team color based on GameData
     ChessGame.TeamColor teamColor = null;

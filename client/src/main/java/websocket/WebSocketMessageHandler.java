@@ -19,12 +19,13 @@ public class WebSocketMessageHandler {
 
     // Handle the message based on its type
     switch (serverMessage.getServerMessageType()) {
+
       case LOAD_GAME:
         // Update local game state
         GameState updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameState.class);
         mainInstance.updateGameState(updatedState);
         // Redraw the chessboard
-        mainInstance.drawChessBoard(mainInstance.isWhitePlayer(),new GameState(updatedState.getGameID()) );
+        mainInstance.drawChessBoard(mainInstance.isWhitePlayer(),updatedState);
         break;
       case NOTIFICATION:
         // Display notification

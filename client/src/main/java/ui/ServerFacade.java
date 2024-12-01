@@ -9,10 +9,13 @@ import java.net.URL;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 
 import model.AuthData;
 import websocket.WebSocketClient;
 import websocket.GameState;
+
+import chess.ChessGame;
 
 public class ServerFacade {
 
@@ -57,22 +60,56 @@ public class ServerFacade {
     }
   }
   public GameState getGameState(int gameID) {
-    // Implement logic to fetch game state from the WebSocket or HTTP endpoint
-    String response = sendHttpRequest("/game/state", "GET", null);
+    // Use the existing `/game` endpoint to fetch all games
+    String response = sendHttpRequest("/game", "GET", null);
 
     if (response.startsWith("Error:")) {
       System.out.println(response);
       return null; // Return null if an error occurs
     }
 
-    // Parse the JSON response into a GameState object
     try {
-      return gson.fromJson(response, GameState.class);
-    } catch (Exception e) {
-      e.printStackTrace();
+      // Parse the JSON response
+      JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
+      JsonArray games = jsonObject.getAsJsonArray("games");
+
+      // Find the game by gameID
+      for (JsonElement gameElement : games) {
+        JsonObject gameObject = gameElement.getAsJsonObject();
+        int id = gameObject.get("gameID").getAsInt();
+        if (id == gameID) {
+          // Extract game data
+          String whiteUsername = gameObject.has("whiteUsername") ? gameObject.get("whiteUsername").getAsString() : null;
+          String blackUsername = gameObject.has("blackUsername") ? gameObject.get("blackUsername").getAsString() : null;
+          String gameName = gameObject.get("gameName").getAsString();
+
+          // Create a GameState object
+          GameState gameState = new GameState(gameID);
+          if (whiteUsername != null) {
+            gameState.addPlayer("white-auth-token", whiteUsername); // Replace with real auth token
+            gameState.assignPlayerTeamColor("white-auth-token", ChessGame.TeamColor.WHITE);
+          }
+          if (blackUsername != null) {
+            gameState.addPlayer("black-auth-token", blackUsername); // Replace with real auth token
+            gameState.assignPlayerTeamColor("black-auth-token", ChessGame.TeamColor.BLACK);
+          }
+
+          // Return the constructed GameState
+          return gameState;
+        }
+      }
+
+      // If no matching game is found
+      System.out.println("Game not found with ID: " + gameID);
       return null;
+    } catch (Exception e) {
+      System.err.println("Error parsing game state: " + e.getMessage());
+      e.printStackTrace();
+      return null; // Handle JSON parsing errors
     }
   }
+
+
 
 
   // Logs in an existing user and stores the auth token on success

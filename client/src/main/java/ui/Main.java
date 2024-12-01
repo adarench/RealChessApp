@@ -6,6 +6,7 @@ import websocket.GameState;
 import chess.ChessPosition;
 import chess.ChessPiece;
 import chess.ChessBoard;
+import websocket.WebSocketMessageHandler;
 
 public class Main {
 
@@ -251,10 +252,9 @@ public class Main {
         // Start listening for real-time updates
         while (true) {
           String serverUpdate = webSocketClient.receiveMessage();
-          if (serverUpdate != null && serverUpdate.contains("update")) {
+          if (serverUpdate != null) {
             System.out.println("Game update received: " + serverUpdate);
-            currentGameState = serverFacade.getGameState(currentGameID); // Fetch updated game state
-            drawChessBoard(true, currentGameState);
+            WebSocketMessageHandler.handleMessage(serverUpdate);
           }
         }
       } catch (Exception e) {
