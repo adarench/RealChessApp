@@ -7,7 +7,9 @@ import chess.ChessPosition;
 import chess.ChessPiece;
 import chess.ChessBoard;
 import websocket.WebSocketMessageHandler;
-
+import websocket.commands.UserGameCommand;
+import com.google.gson.Gson;
+import chess.ChessGame;
 public class Main {
 
   private static ServerFacade serverFacade;
@@ -17,9 +19,6 @@ public class Main {
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
   private static int currentGameID = -1; // Track the current game ID
-
-
-
 
   public static void main(String[] args) {
     String serverUrl = "http://localhost:8080";
@@ -31,8 +30,8 @@ public class Main {
 
     System.out.println("Connected to server at: " + serverUrl);
 
-    // Initialize WebSocketClient
-    webSocketClient = new WebSocketClient();
+    // Initialize WebSocketClient using Singleton
+    webSocketClient = WebSocketClient.getInstance();
     try {
       webSocketClient.connect(webSocketUrl);
     } catch (Exception e) {
@@ -41,13 +40,7 @@ public class Main {
     }
     serverFacade = new ServerFacade(serverUrl);
 
-    // Initialize WebSocketClient
-    webSocketClient = new WebSocketClient();
-    try {
-      webSocketClient.connect(webSocketUrl);
-    } catch (Exception e) {
-      System.err.println("Failed to connect to WebSocket server: " + e.getMessage());
-    }
+    // Removed Duplicate Initialization
 
     showPreloginMenu();
   }
@@ -201,23 +194,30 @@ public class Main {
     if (response.contains("Successfully joined")) {
       isLoggedIn = true; // Update login status
       currentGameID = serverFacade.getLastGameID();
-      // Fetch the game state after joining
-      currentGameState = serverFacade.getGameState(currentGameID);
-      if (currentGameState != null) {
-        drawChessBoard(playerColor.equals("white"), currentGameState);
-      } else {
-        System.out.println("Error: No game state available to draw the board.");
-      }
+
+      // Send CONNECT command via WebSocket
+      sendConnectCommand(currentGameID);
 
       // Start gameplay loop
       gameplayLoop();
 
-
-    }else if (response.contains("Game is already full")) {
+    } else if (response.contains("Game is already full")) {
       System.out.println("Error: Unable to join. The game is already full.");
     }
   }
+  private static void sendConnectCommand(int gameID) {
+    // Create a UserGameCommand object for CONNECT
+    UserGameCommand connectCommand = new UserGameCommand();
+    connectCommand.setCommandType(UserGameCommand.CommandType.CONNECT);
+    connectCommand.setAuthToken(serverFacade.getAuthToken());
+    connectCommand.setGameID(gameID);
 
+    // Serialize to JSON using Gson
+    String connectJson = new Gson().toJson(connectCommand);
+
+    // Send the CONNECT command via WebSocket
+    webSocketClient.sendMessage(connectJson);
+  }
 
   private static void observeGame() {
     System.out.print("Enter the game name to observe: ");
@@ -234,11 +234,22 @@ public class Main {
     // Draw the chessboard only if the game was successfully observed
     if (response.startsWith("Observing game:")) {
       try {
+        // Fetch the game ID by name
+        int gameID = serverFacade.getGameIdByName(gameName);
+        if (gameID == -1) {
+          System.out.println("Error: Unable to find game ID for the specified game name.");
+          return;
+        }
+
         // Send a WebSocket CONNECT command for observing the game
-        String observeCommand = String.format(
-                "{\"commandType\": \"CONNECT\", \"authToken\": \"validToken\", \"gameID\": \"%s\"}", gameName
-        );
-        webSocketClient.sendMessage(observeCommand);
+        UserGameCommand connectCommand = new UserGameCommand();
+        connectCommand.setCommandType(UserGameCommand.CommandType.CONNECT);
+        connectCommand.setAuthToken(serverFacade.getAuthToken());
+        connectCommand.setGameID(gameID);
+        String connectJson = new Gson().toJson(connectCommand);
+        webSocketClient.sendMessage(connectJson);
+
+        currentGameID = gameID; // Update the currentGameID
         currentGameState = serverFacade.getGameState(currentGameID);
 
         if (currentGameState != null) {
@@ -369,14 +380,23 @@ public class Main {
   }
 
 
-  public void updateGameState(GameState updatedState) {
-    this.currentGameState = updatedState;
+  public static void updateGameState(GameState updatedState) {
+    currentGameState = updatedState;
   }
-  public boolean isWhitePlayer() {
-    // Determine based on player color
-    // This method needs to be implemented to reflect the player's assigned color
-    return true; // Placeholder
+  public static boolean isWhitePlayer() {
+    if (currentGameState == null) {
+      System.err.println("GameState is null. Cannot determine player color.");
+      return true; // Default orientation
+    }
+    // Assuming you have a method to get the player's color
+    ChessGame.TeamColor playerColor = currentGameState.getPlayerColor(serverFacade.getAuthToken());
+    if (playerColor == ChessGame.TeamColor.WHITE) {
+      return true;
+    } else {
+      return false;
+    }
   }
+
   private static void showGameplayHelp() {
     System.out.println("In-Game Commands:");
     System.out.println("  makemove - Make a chess move (e.g., e2e4)");
@@ -408,13 +428,7 @@ public class Main {
               serverFacade.getLastGameID(),
               move
       );
-      // Fetch the updated game state and redraw the board
-              currentGameState = serverFacade.getGameState(currentGameID);
-      if (currentGameState != null) {
-        drawChessBoard(true, currentGameState);
-      } else {
-        System.out.println("Error: Failed to update game state after move.");
-      }
+
     } catch (Exception e) {
       System.err.println("Error: Failed to send move command. " + e.getMessage());
     }

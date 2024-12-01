@@ -16,11 +16,6 @@ public class UserGameCommand {
     private Integer gameID;
     private ChessMove move; // Only applicable for MAKE_MOVE commands
 
-    public UserGameCommand() {
-
-    }
-
-
 
     public enum CommandType {
         CONNECT,

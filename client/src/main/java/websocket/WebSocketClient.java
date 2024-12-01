@@ -13,12 +13,28 @@ import websocket.messages.ServerMessage;
 import chess.ChessMove;
 
 /**
- * A WebSocket client using Java's built-in WebSocket API.
+ * A Singleton WebSocket client using Java's built-in WebSocket API.
  */
 public class WebSocketClient {
+  private static WebSocketClient instance;
   private WebSocket webSocket;
   private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
   private final Gson gson = new Gson();
+
+  // Private constructor to prevent instantiation
+  public WebSocketClient() {}
+
+  /**
+   * Retrieves the singleton instance of WebSocketClient.
+   *
+   * @return The singleton WebSocketClient instance.
+   */
+  public static synchronized WebSocketClient getInstance() {
+    if (instance == null) {
+      instance = new WebSocketClient();
+    }
+    return instance;
+  }
 
   /**
    * Connects to the WebSocket server at the given URI.
@@ -27,6 +43,10 @@ public class WebSocketClient {
    * @throws Exception If the connection fails.
    */
   public void connect(String serverUri) throws Exception {
+    if (webSocket != null) {
+      System.out.println("WebSocket is already connected.");
+      return;
+    }
     HttpClient client = HttpClient.newHttpClient();
     webSocket = client.newWebSocketBuilder()
             .buildAsync(URI.create(serverUri), new WebSocketListener())
@@ -78,9 +98,19 @@ public class WebSocketClient {
                 System.err.println("Failed to close WebSocket: " + ex.getMessage());
                 return null;
               });
+      webSocket = null;
+    } else {
+      System.err.println("WebSocket is not connected.");
     }
   }
 
+  /**
+   * Sends a MAKE_MOVE command via WebSocket.
+   *
+   * @param authToken The authentication token of the user.
+   * @param gameID    The ID of the game.
+   * @param move      The chess move to make.
+   */
   public void sendMakeMoveCommand(String authToken, int gameID, ChessMove move) {
     UserGameCommand makeMoveCommand = new UserGameCommand();
     makeMoveCommand.setCommandType(UserGameCommand.CommandType.MAKE_MOVE);
@@ -89,7 +119,6 @@ public class WebSocketClient {
     makeMoveCommand.setMove(move);
     sendMessage(gson.toJson(makeMoveCommand));
   }
-
 
   /**
    * Internal WebSocket listener to handle events and incoming messages.
@@ -114,6 +143,7 @@ public class WebSocketClient {
     @Override
     public CompletableFuture<?> onClose(WebSocket webSocket, int statusCode, String reason) {
       System.out.println("WebSocket connection closed. Code: " + statusCode + ", Reason: " + reason);
+      webSocket = null;
       return CompletableFuture.completedFuture(null);
     }
 

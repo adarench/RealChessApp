@@ -45,8 +45,10 @@ public class GameState {
       return true;
     }
 
-    return true;
+    // Game is full, cannot add more players
+    return false;
   }
+
 
   public Set<String> getAllParticipants() {
     Set<String> participants = new HashSet<>(players.keySet());
@@ -97,6 +99,11 @@ public class GameState {
     return observers;
   }
 
+  public ChessGame.TeamColor getPlayerColor(String authToken) {
+    return playerColors.get(authToken);
+  }
+
+
   public boolean isGameOver() {
     return gameOver;
   }
@@ -140,6 +147,15 @@ public class GameState {
     } catch (InvalidMoveException e) {
       return new MoveResult(false, e.getMessage());
     }
+  }
+  @Override
+  public String toString() {
+    return "GameState{" +
+            "gameID=" + gameID +
+            ", players=" + players +
+            ", observers=" + observers +
+            ", gameOver=" + gameOver +
+            '}';
   }
 
 

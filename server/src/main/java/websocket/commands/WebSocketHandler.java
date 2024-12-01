@@ -41,16 +41,22 @@ public class WebSocketHandler {
   }
 
   public ServerMessage handleCommand(UserGameCommand command, Session session) {
+    System.out.println("Received command: " + command.getCommandType());
     switch (command.getCommandType()) {
       case CONNECT:
+        System.out.println("Dispatching to handleConnect");
         return handleConnect(command, session);
       case MAKE_MOVE:
+        System.out.println("Dispatching to handleMakeMove");
         return handleMakeMove(command);
       case LEAVE:
+        System.out.println("Dispatching to handleLeave");
         return handleLeave(command);
       case RESIGN:
+        System.out.println("Dispatching to handleResign");
         return handleResign(command);
       default:
+        System.out.println("Unknown command type received");
         return new ServerMessage(ServerMessageType.ERROR, "Unknown command type");
     }
   }
@@ -58,6 +64,7 @@ public class WebSocketHandler {
   public ServerMessage handleConnect(UserGameCommand command, Session session) {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
+    System.out.println("Handling CONNECT for gameID: " + gameID + ", authToken: " + authToken);
 
     // Validate the authToken using AuthDAO
     String userName;
@@ -87,21 +94,9 @@ public class WebSocketHandler {
       return new ServerMessage(ServerMessageType.ERROR, "Server error during game retrieval");
     }
 
-    // Synchronize gameStates map
-    GameState gameState = gameStates.computeIfAbsent(gameID, id -> {
-      GameState newGameState = new GameState(id);
-      // Initialize players and colors based on GameData
-      if (gameData.whiteUsername() != null) {
-        newGameState.addPlayer(authToken, gameData.whiteUsername());
-        newGameState.assignPlayerTeamColor(authToken, ChessGame.TeamColor.WHITE);
-      }
-      if (gameData.blackUsername() != null) {
-        newGameState.addPlayer(authToken, gameData.blackUsername());
-        newGameState.assignPlayerTeamColor(authToken, ChessGame.TeamColor.BLACK);
-      }
-      return newGameState;
-    });
-
+    gameStates.computeIfAbsent(gameID, id -> new GameState(id));
+    GameState gameState = gameStates.get(gameID);
+    System.out.println("Initialized GameState for gameID: " + gameID);
     // Determine the player's team color based on GameData
     ChessGame.TeamColor teamColor = null;
     if (userName.equals(gameData.whiteUsername())) {
@@ -110,7 +105,7 @@ public class WebSocketHandler {
       teamColor = ChessGame.TeamColor.BLACK;
     }
 
-    boolean addedAsPlayer = false;
+    boolean addedAsPlayer;
     if (teamColor != null) {
       // Add the player as they are assigned in the game
       addedAsPlayer = gameState.addPlayer(authToken, userName);
@@ -124,6 +119,9 @@ public class WebSocketHandler {
       // Add the user as an observer if they are not assigned to a team
       gameState.addObserver(authToken);
     }
+    System.out.println("Current players in game " + gameID + ": " + gameState.getPlayers());
+    System.out.println("Current observers in game " + gameID + ": " + gameState.getObservers());
+
 
 // Build and return the full game state to the connecting user
     ServerMessage response = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);
@@ -131,6 +129,7 @@ public class WebSocketHandler {
     // Notify other users in the game about the new connection
     String notificationMessage = userName + " has joined the game.";
     server.broadcastNotification(gameID, notificationMessage, authToken);
+    System.out.println("Broadcasted join notification for " + userName);
     System.out.println("Players in game: " + gameState.getPlayers());
     System.out.println("Observers in game: " + gameState.getObservers());
 
@@ -276,6 +275,7 @@ public class WebSocketHandler {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
     ChessMove move = command.getMove();
+    System.out.println("Handling MAKE_MOVE for gameID: " + gameID + ", authToken: " + authToken + ", move: " + move);
     System.out.println("handleMakeMove called for authToken: " + authToken);
 
 
@@ -298,9 +298,11 @@ public class WebSocketHandler {
     }
 
     GameState gameState = gameStates.get(gameID);
+    System.out.println("Found GameState: " + gameState);
 
     // Attempt to make the move using GameState
     GameState.MoveResult moveResult = gameState.makeMove(authToken, move);
+    System.out.println("MoveResult: " + moveResult.isSuccessful() + ", Message: " + moveResult.getErrorMessage());
 
     if (!moveResult.isSuccessful()) {
       // Return an error message to the client
@@ -330,6 +332,7 @@ public class WebSocketHandler {
       }
     }
     // Return the updated game state to the moving player
+    System.out.println("MAKE_MOVE successful for gameID: " + gameID + ", move: " + move);
     return gameStateMessage;
   }
 
