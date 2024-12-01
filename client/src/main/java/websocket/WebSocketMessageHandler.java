@@ -1,16 +1,17 @@
 package websocket;
-
 import com.google.gson.Gson;
+import ui.Main;
 import websocket.messages.ServerMessage;
+import com.google.gson.JsonObject;
 
 public class WebSocketMessageHandler {
-
   private static final Gson gson = new Gson();
+  private static Main mainInstance; // Reference to Main instance
 
-  /**
-   * Processes a message received from the WebSocket server.
-   * @param message The incoming message as a JSON string.
-   */
+  public static void initialize(Main main) {
+    mainInstance = main;
+  }
+
   public static void handleMessage(String message) {
     System.out.println("Processing message: " + message);
 
@@ -20,15 +21,18 @@ public class WebSocketMessageHandler {
     // Handle the message based on its type
     switch (serverMessage.getServerMessageType()) {
       case LOAD_GAME:
-        // Handle game load logic
-        System.out.println("Game loaded successfully.");
+        // Update local game state
+        GameState updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameState.class);
+        mainInstance.updateGameState(updatedState);
+        // Redraw the chessboard
+        mainInstance.drawChessBoard(mainInstance.isWhitePlayer());
         break;
       case NOTIFICATION:
-        // Handle notifications
+        // Display notification
         System.out.println("Notification: " + serverMessage.getMessage());
         break;
       case ERROR:
-        // Handle errors
+        // Display error message
         System.err.println("Error: " + serverMessage.getErrorMessage());
         break;
       default:

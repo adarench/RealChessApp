@@ -40,7 +40,7 @@ public class ChessGame {
         return false;
     }
 
-    private ChessGame.TeamColor getOpponentColor(ChessGame.TeamColor teamColor) {
+    public ChessGame.TeamColor getOpponentColor(ChessGame.TeamColor teamColor) {
         return (teamColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
     }
 

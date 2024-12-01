@@ -81,7 +81,26 @@ public class GameState {
     return observers.remove(authToken);
   }
 
-  public MoveResult makeMove(String authToken, ChessMove move) {
+  public ChessGame getChessGame() {
+    return chessGame;
+  }
+
+  public int getGameID() {
+    return gameID;
+  }
+
+  public Map<String, String> getPlayers() {
+    return players;
+  }
+
+  public Set<String> getObservers() {
+    return observers;
+  }
+
+  public boolean isGameOver() {
+    return gameOver;
+  }
+  public GameState.MoveResult makeMove(String authToken, ChessMove move) {
     if (gameOver) {
       return new MoveResult(false, "Game is already over");
     }
@@ -103,55 +122,27 @@ public class GameState {
     }
 
     try {
-      // Use your fully implemented ChessGame to make the move
+      // Make the move using ChessGame logic
       chessGame.makeMove(move);
-      chessGame.setTeamTurn((playerColor == ChessGame.TeamColor.WHITE) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE);
+
+      // Check for game-ending conditions
+      ChessGame.TeamColor opponentColor = chessGame.getOpponentColor(playerColor);
+      if (chessGame.isInCheckmate(opponentColor)) {
+        gameOver = true;
+        return new MoveResult(true, "Move successful. Checkmate!");
+      } else if (chessGame.isInStalemate(opponentColor)) {
+        gameOver = true;
+        return new MoveResult(true, "Move successful. Stalemate!");
+      }
+
+      // If no game-ending conditions, return success
+      return new MoveResult(true, "Move executed successfully");
     } catch (InvalidMoveException e) {
       return new MoveResult(false, e.getMessage());
     }
-
-    // Determine the opponent's team color
-    ChessGame.TeamColor opponentColor = (playerColor == ChessGame.TeamColor.WHITE)
-            ? ChessGame.TeamColor.BLACK
-            : ChessGame.TeamColor.WHITE;
-
-    // Check for game over conditions on the opponent
-    if (chessGame.isInCheckmate(opponentColor)) {
-      gameOver = true;
-      return new MoveResult(true, "Move successful. Checkmate!");
-    } else if (chessGame.isInStalemate(opponentColor)) {
-      gameOver = true;
-      return new MoveResult(true, "Move successful. Stalemate!");
-    }
-
-    return new MoveResult(true, "Move executed successfully");
   }
 
 
-
-
-
-
-
-  public ChessGame getChessGame() {
-    return chessGame;
-  }
-
-  public int getGameID() {
-    return gameID;
-  }
-
-  public Map<String, String> getPlayers() {
-    return players;
-  }
-
-  public Set<String> getObservers() {
-    return observers;
-  }
-
-  public boolean isGameOver() {
-    return gameOver;
-  }
 
   public static class MoveResult {
     private final boolean successful;

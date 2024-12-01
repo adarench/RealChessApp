@@ -10,22 +10,28 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-
-
-
-
 import model.AuthData;
+import websocket.WebSocketClient;
 
 public class ServerFacade {
 
   private final String serverUrl;
   public ServerFacade(String serverUrl) {
+
     this.serverUrl = serverUrl;
+
   }
+
   private String authToken = null; // Store auth token after login
   private String currentUsername = null;
+  private int lastGameID = -1;
+
 
   private final Gson gson = new Gson();
+
+  public String getAuthToken() {
+    return this.authToken;
+  }
 
   // Registers a new user
   public String register(String username, String password, String email) {
@@ -189,8 +195,15 @@ public class ServerFacade {
       return response; // Pass other errors back as-is
     }
 
+    // Store the gameID for later retrieval
+    lastGameID = gameID;
+
     return "Successfully joined the game: " + gameName;
   }
+  public int getLastGameID() {
+    return lastGameID;
+  }
+
 
 
   private String sendHttpRequest(String endpoint, String method, String jsonInputString) {
@@ -250,7 +263,7 @@ public class ServerFacade {
   }
 
 
-  private int getGameIdByName(String gameName) {
+  public int getGameIdByName(String gameName) {
     // Use the helper to send the GET request
     String response = sendHttpRequest("/game", "GET", null);
 

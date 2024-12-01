@@ -3,13 +3,23 @@ import java.util.Scanner;
 import websocket.WebSocketClient;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import chess.ChessMove;
+import websocket.GameState;
+import chess.ChessPosition;
+import chess.ChessPiece;
 
 public class Main {
 
   private static ServerFacade serverFacade;
   private static WebSocketClient webSocketClient;
+  private static GameState currentGameState;
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
+
+  private static int currentGameID = -1; // Track the current game ID
+
+
+
 
   public static void main(String[] args) {
     String serverUrl = "http://localhost:8080";
@@ -20,6 +30,15 @@ public class Main {
     }
 
     System.out.println("Connected to server at: " + serverUrl);
+
+    // Initialize WebSocketClient
+    webSocketClient = new WebSocketClient();
+    try {
+      webSocketClient.connect(webSocketUrl);
+    } catch (Exception e) {
+      System.err.println("Failed to connect to WebSocket server: " + e.getMessage());
+      return; // Exit if WebSocket connection fails
+    }
     serverFacade = new ServerFacade(serverUrl);
 
     // Initialize WebSocketClient
@@ -59,6 +78,7 @@ public class Main {
       }
     }
   }
+
 
   // Display help text
   private static void showHelp() {
@@ -179,6 +199,10 @@ public class Main {
     System.out.println(response);
 
     if (response.contains("Successfully joined")) {
+      isLoggedIn = true; // Update login status
+      currentGameID = serverFacade.getLastGameID();
+      // Start gameplay loop
+      gameplayLoop();
       drawChessBoard(playerColor.equals("white"));
     }else if (response.contains("Game is already full")) {
       System.out.println("Error: Unable to join. The game is already full.");
@@ -274,7 +298,161 @@ public class Main {
     System.out.println("  observegame - Observe an existing game");
     System.out.println("  logout      - Log out and return to the prelogin menu");
   }
-  private static void drawChessBoard(boolean whiteAtBottom) {
+
+  private static void gameplayLoop() {
+    while (true) {
+      System.out.println("\nEnter a command: makemove, resign, leave, help");
+      System.out.print("> ");
+      String command = scanner.nextLine().trim().toLowerCase();
+
+      switch (command) {
+        case "makemove":
+          makeMove();
+          break;
+        case "resign":
+          resign();
+          break;
+        case "leave":
+          leaveGame();
+          return; // Exit gameplay loop
+        case "help":
+          showGameplayHelp();
+          break;
+        default:
+          System.out.println("Invalid command. Type 'help' for a list of commands.");
+      }
+    }
+  }
+
+  private static void leaveGame() {
+    if (currentGameID == -1) {
+      System.out.println("Error: You are not currently in a game.");
+      return;
+    }
+
+    // Send a WebSocket LEAVE command
+    String leaveCommand = String.format(
+            "{\"commandType\": \"LEAVE\", \"authToken\": \"%s\", \"gameID\": %d}",
+            serverFacade.getAuthToken(), currentGameID
+    );
+    webSocketClient.sendMessage(leaveCommand);
+
+    System.out.println("You have left the game.");
+    currentGameID = -1; // Reset current game ID
+  }
+  private static void resign() {
+    if (currentGameID == -1) {
+      System.out.println("Error: You are not currently in a game.");
+      return;
+    }
+
+    // Send a WebSocket RESIGN command
+    String resignCommand = String.format(
+            "{\"commandType\": \"RESIGN\", \"authToken\": \"%s\", \"gameID\": %d}",
+            serverFacade.getAuthToken(), currentGameID
+    );
+    webSocketClient.sendMessage(resignCommand);
+
+    System.out.println("You have resigned from the game.");
+    currentGameID = -1; // Reset current game ID
+  }
+
+
+  public void updateGameState(GameState updatedState) {
+    this.currentGameState = updatedState;
+  }
+  public boolean isWhitePlayer() {
+    // Determine based on player color
+    // This method needs to be implemented to reflect the player's assigned color
+    return true; // Placeholder
+  }
+  private static void showGameplayHelp() {
+    System.out.println("In-Game Commands:");
+    System.out.println("  makemove - Make a chess move (e.g., e2e4)");
+    System.out.println("  resign   - Resign from the game");
+    System.out.println("  leave    - Leave the game without resigning");
+    System.out.println("  help     - Display available in-game commands");
+  }
+
+  private static void makeMove() {
+    System.out.print("Enter your move (e.g., e2e4): ");
+    String moveInput = scanner.nextLine().trim();
+
+    if (!isValidMoveFormat(moveInput)) {
+      System.out.println("Error: Invalid move format. Please use standard chess notation (e.g., e2e4).");
+      return;
+    }
+
+    // Parse move input
+    ChessMove move = parseMove(moveInput);
+    if (move == null) {
+      System.out.println("Error: Failed to parse move. Please try again.");
+      return;
+    }
+
+    // Send move via WebSocketClient
+    try {
+      webSocketClient.sendMakeMoveCommand(
+              serverFacade.getAuthToken(), // Auth token remains managed by ServerFacade
+              serverFacade.getLastGameID(),
+              move
+      );
+    } catch (Exception e) {
+      System.err.println("Error: Failed to send move command. " + e.getMessage());
+    }
+  }
+  private static boolean isValidMoveFormat(String move) {
+    return move.matches("^[a-h][1-8][a-h][1-8][QRBN]?$");
+  }
+  private static GameState fetchGameStateFromServer(int gameID) {
+    // Logic to retrieve the game state (via WebSocket or HTTP)
+    return null; // Replace with actual implementation
+  }
+
+  private static ChessMove parseMove(String moveInput) {
+    try {
+      // Extract start and end positions from input
+      String start = moveInput.substring(0, 2); // e.g., "e2"
+      String end = moveInput.substring(2, 4);   // e.g., "e4"
+
+      // Convert start and end strings into ChessPosition objects
+      ChessPosition startPosition = parseChessPosition(start);
+      ChessPosition endPosition = parseChessPosition(end);
+
+      // Parse promotion piece if provided (optional)
+      ChessPiece.PieceType promotionPiece = null;
+      if (moveInput.length() == 5) {
+        char promotionChar = moveInput.charAt(4); // e.g., 'q' for queen
+        promotionPiece = mapPromotionPiece(promotionChar);
+      }
+
+      // Return the ChessMove object
+      return new ChessMove(startPosition, endPosition, promotionPiece);
+    } catch (Exception e) {
+      // Return null for invalid input
+      return null;
+    }
+  }
+  private static ChessPosition parseChessPosition(String position) {
+    char column = position.charAt(0); // e.g., 'e'
+    int row = Character.getNumericValue(position.charAt(1)); // e.g., 2
+
+    int colIndex = column - 'a' + 1; // Convert 'a' to 1, 'b' to 2, etc.
+    return new ChessPosition(row, colIndex);
+  }
+
+  private static ChessPiece.PieceType mapPromotionPiece(char promotionChar) {
+    switch (Character.toLowerCase(promotionChar)) {
+      case 'q': return ChessPiece.PieceType.QUEEN;
+      case 'r': return ChessPiece.PieceType.ROOK;
+      case 'b': return ChessPiece.PieceType.BISHOP;
+      case 'n': return ChessPiece.PieceType.KNIGHT;
+      default: return null; // Invalid promotion piece
+    }
+  }
+
+
+  public static void drawChessBoard(boolean whiteAtBottom) {
     // Pieces in starting positions
     String[][] board = {
             {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"},

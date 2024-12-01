@@ -30,8 +30,6 @@ public class ChessBoard {
         return newBoard;
     }
 
-
-
     /**
      * Adds a chess piece to the chessboard
      *
@@ -53,6 +51,10 @@ public class ChessBoard {
 
         return board[position.getRow()-1][position.getColumn()-1];
     }
+    public ChessPiece[][] getBoard() {
+        return board;
+    }
+
 
     /**
      * Sets the board to the default starting board
@@ -117,7 +119,7 @@ public class ChessBoard {
         return sb.toString();
     }
 
-    private char getPieceSymbol(ChessPiece piece) {
+    public char getPieceSymbol(ChessPiece piece) {
         if (piece == null) {
             return ' ';
         }

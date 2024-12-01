@@ -50,6 +50,23 @@ public class UserGameCommand {
         return move;
     }
 
+    public void setCommandType(CommandType commandType) {
+        this.commandType = commandType;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void setGameID(Integer gameID) {
+        this.gameID = gameID;
+    }
+
+    public void setMove(ChessMove move) {
+        this.move = move;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

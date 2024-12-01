@@ -6,9 +6,11 @@ import java.net.http.WebSocket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+import websocket.commands.UserGameCommand;
 
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
+import chess.ChessMove;
 
 /**
  * A WebSocket client using Java's built-in WebSocket API.
@@ -78,6 +80,16 @@ public class WebSocketClient {
               });
     }
   }
+
+  public void sendMakeMoveCommand(String authToken, int gameID, ChessMove move) {
+    UserGameCommand makeMoveCommand = new UserGameCommand();
+    makeMoveCommand.setCommandType(UserGameCommand.CommandType.MAKE_MOVE);
+    makeMoveCommand.setAuthToken(authToken);
+    makeMoveCommand.setGameID(gameID);
+    makeMoveCommand.setMove(move);
+    sendMessage(gson.toJson(makeMoveCommand));
+  }
+
 
   /**
    * Internal WebSocket listener to handle events and incoming messages.
