@@ -1,12 +1,11 @@
 package ui;
 import java.util.Scanner;
 import websocket.WebSocketClient;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import chess.ChessMove;
 import websocket.GameState;
 import chess.ChessPosition;
 import chess.ChessPiece;
+import chess.ChessBoard;
 
 public class Main {
 
@@ -201,9 +200,18 @@ public class Main {
     if (response.contains("Successfully joined")) {
       isLoggedIn = true; // Update login status
       currentGameID = serverFacade.getLastGameID();
+      // Fetch the game state after joining
+      currentGameState = serverFacade.getGameState(currentGameID);
+      if (currentGameState != null) {
+        drawChessBoard(playerColor.equals("white"), currentGameState);
+      } else {
+        System.out.println("Error: No game state available to draw the board.");
+      }
+
       // Start gameplay loop
       gameplayLoop();
-      drawChessBoard(playerColor.equals("white"));
+
+
     }else if (response.contains("Game is already full")) {
       System.out.println("Error: Unable to join. The game is already full.");
     }
@@ -230,10 +238,13 @@ public class Main {
                 "{\"commandType\": \"CONNECT\", \"authToken\": \"validToken\", \"gameID\": \"%s\"}", gameName
         );
         webSocketClient.sendMessage(observeCommand);
+        currentGameState = serverFacade.getGameState(currentGameID);
 
-        // Draw the chessboard for both perspectives
-        drawChessBoard(true);
-        drawChessBoard(false);
+        if (currentGameState != null) {
+          drawChessBoard(true, currentGameState); // Assuming observing is always from the white perspective
+        } else {
+          System.out.println("Error: No game state available to draw the board.");
+        }
 
         System.out.println("Waiting for real-time updates...");
 
@@ -242,8 +253,8 @@ public class Main {
           String serverUpdate = webSocketClient.receiveMessage();
           if (serverUpdate != null && serverUpdate.contains("update")) {
             System.out.println("Game update received: " + serverUpdate);
-            drawChessBoard(true);
-            drawChessBoard(false);
+            currentGameState = serverFacade.getGameState(currentGameID); // Fetch updated game state
+            drawChessBoard(true, currentGameState);
           }
         }
       } catch (Exception e) {
@@ -397,6 +408,13 @@ public class Main {
               serverFacade.getLastGameID(),
               move
       );
+      // Fetch the updated game state and redraw the board
+              currentGameState = serverFacade.getGameState(currentGameID);
+      if (currentGameState != null) {
+        drawChessBoard(true, currentGameState);
+      } else {
+        System.out.println("Error: Failed to update game state after move.");
+      }
     } catch (Exception e) {
       System.err.println("Error: Failed to send move command. " + e.getMessage());
     }
@@ -452,52 +470,43 @@ public class Main {
   }
 
 
-  public static void drawChessBoard(boolean whiteAtBottom) {
-    // Pieces in starting positions
-    String[][] board = {
-            {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"},
-            {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"},
-            {" ", " ", " ", " ", " ", " ", " ", " "},
-            {" ", " ", " ", " ", " ", " ", " ", " "},
-            {" ", " ", " ", " ", " ", " ", " ", " "},
-            {" ", " ", " ", " ", " ", " ", " ", " "},
-            {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"},
-            {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"}
-    };
-
-    // Flip board for black perspective
-    if (!whiteAtBottom) {
-      for (int row = 0; row < board.length; row++) {
-        // Reverse each row to flip horizontally
-        for (int col = 0; col < board[row].length / 2; col++) {
-          String temp = board[row][col];
-          board[row][col] = board[row][board[row].length - 1 - col];
-          board[row][board[row].length - 1 - col] = temp;
-        }
-      }
+  public static void drawChessBoard(boolean whiteAtBottom, GameState gameState) {
+    if (currentGameState == null || currentGameState.getChessGame() == null) {
+      System.out.println("Error: No game state available to draw the board.");
+      return;
     }
 
-    // Draw the board
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
+    // Get the current board state
+    ChessBoard board = currentGameState.getChessGame().getBoard();
+
+    // Print the board row by row
+    for (int row = 8; row >= 1; row--) { // Rows in chess are from 8 (top) to 1 (bottom)
+      for (int col = 1; col <= 8; col++) { // Columns are from a (1) to h (8)
+        ChessPosition position = new ChessPosition(row, col);
+        ChessPiece piece = board.getPiece(position);
+
+        // Display the piece if one exists, or a blank space otherwise
+        String squareContent = (piece != null) ? piece.toString() : " ";
         boolean isLightSquare = (row + col) % 2 == 0;
-        String squareColor = isLightSquare ? "\u001B[47m" : "\u001B[40m"; // White or Black background
-        String reset = "\u001B[0m"; // Reset colors
-        System.out.print(squareColor + board[row][col] + " " + reset);
+
+        // Color the squares for display
+        String squareColor = isLightSquare ? "\u001B[47m" : "\u001B[40m"; // White or black background
+        String reset = "\u001B[0m"; // Reset terminal color
+        System.out.print(squareColor + squareContent + " " + reset);
       }
-      // Print row numbers on the right
-      System.out.println(" " + (whiteAtBottom ? 8 - row : row + 1));
+      System.out.println(" " + row); // Add the row number to the right
     }
 
-    // Print column labels
-    System.out.print("");
-    char[] columns = whiteAtBottom ? new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}
+    // Print column labels at the bottom
+    char[] columns = whiteAtBottom
+            ? new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}
             : new char[]{'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'};
     for (char col : columns) {
       System.out.print(col + " ");
     }
     System.out.println();
   }
+
 
 
 

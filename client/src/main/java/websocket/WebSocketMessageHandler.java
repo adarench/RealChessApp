@@ -2,7 +2,6 @@ package websocket;
 import com.google.gson.Gson;
 import ui.Main;
 import websocket.messages.ServerMessage;
-import com.google.gson.JsonObject;
 
 public class WebSocketMessageHandler {
   private static final Gson gson = new Gson();
@@ -25,7 +24,7 @@ public class WebSocketMessageHandler {
         GameState updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameState.class);
         mainInstance.updateGameState(updatedState);
         // Redraw the chessboard
-        mainInstance.drawChessBoard(mainInstance.isWhitePlayer());
+        mainInstance.drawChessBoard(mainInstance.isWhitePlayer(),new GameState(updatedState.getGameID()) );
         break;
       case NOTIFICATION:
         // Display notification

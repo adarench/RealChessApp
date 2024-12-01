@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 
 import model.AuthData;
 import websocket.WebSocketClient;
+import websocket.GameState;
 
 public class ServerFacade {
 
@@ -55,6 +56,24 @@ public class ServerFacade {
       return "Error parsing registration data";
     }
   }
+  public GameState getGameState(int gameID) {
+    // Implement logic to fetch game state from the WebSocket or HTTP endpoint
+    String response = sendHttpRequest("/game/state", "GET", null);
+
+    if (response.startsWith("Error:")) {
+      System.out.println(response);
+      return null; // Return null if an error occurs
+    }
+
+    // Parse the JSON response into a GameState object
+    try {
+      return gson.fromJson(response, GameState.class);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
 
   // Logs in an existing user and stores the auth token on success
   public String login(String username, String password) {
