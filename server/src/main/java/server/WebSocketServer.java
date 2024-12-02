@@ -66,6 +66,7 @@ public class WebSocketServer {
   public void sendMessage(Session session, String message) {
     try {
       if (session != null && session.isOpen()) {
+        System.out.println("Sending message to session: " + session + ", message: " + message);
         session.getRemote().sendString(message);
       } else {
         System.err.println("Session is closed or null. Cannot send message: " + message);
@@ -85,6 +86,8 @@ public class WebSocketServer {
       Session recipientSession = authTokenToSession.get(authToken);
       if (recipientSession != null && recipientSession.isOpen()) {
         sendMessage(recipientSession, gson.toJson(notification));
+      } else{
+        System.err.println("session for recipient is closed or not found: " + authToken);
       }
     }
   }

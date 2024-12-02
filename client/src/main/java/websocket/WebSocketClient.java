@@ -135,7 +135,9 @@ public class WebSocketClient {
     public CompletableFuture<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
       String message = data.toString();
       System.out.println("Message received: " + message);
-      WebSocketMessageHandler.handleMessage(message); // Delegate message handling
+
+      // Process the message without blocking
+      CompletableFuture.runAsync(() -> WebSocketMessageHandler.handleMessage(message));
       messageQueue.offer(message); // Queue the message for other use
       return CompletableFuture.completedFuture(null);
     }

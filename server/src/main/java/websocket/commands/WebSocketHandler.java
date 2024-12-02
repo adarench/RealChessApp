@@ -275,8 +275,8 @@ public class WebSocketHandler {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
     ChessMove move = command.getMove();
-    System.out.println("Handling MAKE_MOVE for gameID: " + gameID + ", authToken: " + authToken + ", move: " + move);
-    System.out.println("handleMakeMove called for authToken: " + authToken);
+    System.out.println("handleMakeMove called for gameID: " + gameID + ", authToken: " + authToken);
+
 
 
     // Validate the authToken using AuthDAO
@@ -308,6 +308,8 @@ public class WebSocketHandler {
       // Return an error message to the client
       return new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
     }
+
+    gameStates.put(gameID, gameState);
 
     // Create the LOAD_GAME message with the updated game state
     ServerMessage gameStateMessage = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);

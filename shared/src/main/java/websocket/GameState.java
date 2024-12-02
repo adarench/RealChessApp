@@ -131,7 +131,7 @@ public class GameState {
     try {
       // Make the move using ChessGame logic
       chessGame.makeMove(move);
-
+      System.out.println("Move applied. Updated board: " + chessGame.getBoard().toString());
       // Check for game-ending conditions
       ChessGame.TeamColor opponentColor = chessGame.getOpponentColor(playerColor);
       if (chessGame.isInCheckmate(opponentColor)) {

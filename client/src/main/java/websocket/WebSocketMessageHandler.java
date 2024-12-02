@@ -21,9 +21,11 @@ public class WebSocketMessageHandler {
     switch (serverMessage.getServerMessageType()) {
       case LOAD_GAME:
         // Update local game state
+        System.out.println("Received LOAD_GAME message. Updating local state.");
         GameState updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameState.class);
         Main.updateGameState(updatedState); // Call static method in Main
         // Redraw the chessboard
+        System.out.println("Redrawing chessboard with updated state...");
         Main.drawChessBoard(Main.isWhitePlayer(), updatedState); // Call static method in Main
         break;
       case NOTIFICATION:

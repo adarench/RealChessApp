@@ -421,6 +421,8 @@ public class Main {
       return;
     }
 
+    System.out.println("Parsed Move: " + move.toString());
+
     // Send move via WebSocketClient
     try {
       webSocketClient.sendMakeMoveCommand(
@@ -428,6 +430,12 @@ public class Main {
               serverFacade.getLastGameID(),
               move
       );
+
+      System.out.println("Waiting for server response...");
+      String serverUpdate = webSocketClient.receiveMessage();
+      if (serverUpdate != null) {
+        WebSocketMessageHandler.handleMessage(serverUpdate);
+      }
 
     } catch (Exception e) {
       System.err.println("Error: Failed to send move command. " + e.getMessage());
@@ -485,6 +493,7 @@ public class Main {
 
 
   public static void drawChessBoard(boolean whiteAtBottom, GameState gameState) {
+    System.out.println("Drawing board with gameState: " + gameState);
     if (currentGameState == null || currentGameState.getChessGame() == null) {
       System.out.println("Error: No game state available to draw the board.");
       return;
