@@ -43,14 +43,18 @@ public class ChessPosition {
     return row == that.row && column == that.column;
     }
 
-    @Override
+    /*@Override
     public String toString() {
         return "ChessPosition{" +
                 "row=" + row +
                 ", column=" + column +
                 '}';
+    }*/
+    @Override
+    public String toString() {
+        char col = (char) ('a' + this.column - 1);
+        return "" + col + this.row;
     }
-
     //hash cases
     @Override
     public int hashCode(){

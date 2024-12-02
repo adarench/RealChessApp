@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.Gson;
 import chess.ChessGame;
 
-
+import websocket.dto.GameStateDTO;
 
 // Import your DAOs and data models
 import dataaccess.AuthDAO;
@@ -25,8 +25,8 @@ import model.GameData;
 import chess.ChessMove;
 
 public class WebSocketHandler {
-  private final Gson gson = new Gson();
-  private final Map<Integer, GameState> gameStates = new ConcurrentHashMap<>(); // gameID -> GameState
+  private Gson gson = new Gson();
+  private static final Map<Integer, GameState> gameStates = new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
 
@@ -123,8 +123,12 @@ public class WebSocketHandler {
     System.out.println("Current observers in game " + gameID + ": " + gameState.getObservers());
 
 
-// Build and return the full game state to the connecting user
-    ServerMessage response = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);
+    // Convert GameState to GameStateDTO
+    GameStateDTO dto = gameState.toDTO();
+
+    // Build and return the full game state to the connecting user
+    ServerMessage loadGameMessage = new ServerMessage(ServerMessageType.LOAD_GAME, dto);
+
 
     // Notify other users in the game about the new connection
     String notificationMessage = userName + " has joined the game.";
@@ -133,7 +137,7 @@ public class WebSocketHandler {
     System.out.println("Players in game: " + gameState.getPlayers());
     System.out.println("Observers in game: " + gameState.getObservers());
 
-    return response;
+    return loadGameMessage;
   }
 
 
@@ -292,12 +296,10 @@ public class WebSocketHandler {
       return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
     }
 
-    // Check if the game exists
-    if (!gameStates.containsKey(gameID)) {
+    GameState gameState = gameStates.get(gameID);
+    if (gameState == null) {
       return new ServerMessage(ServerMessageType.ERROR, "Game not found");
     }
-
-    GameState gameState = gameStates.get(gameID);
     System.out.println("Found GameState: " + gameState);
 
     // Attempt to make the move using GameState
@@ -309,10 +311,15 @@ public class WebSocketHandler {
       return new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
     }
 
-    gameStates.put(gameID, gameState);
+    // Convert GameState to GameStateDTO
+    GameStateDTO dto = gameState.toDTO();
 
-    // Create the LOAD_GAME message with the updated game state
-    ServerMessage gameStateMessage = new ServerMessage(ServerMessageType.LOAD_GAME, gameState);
+    // Serialize and log the DTO for debugging
+    String serializedDTO = gson.toJson(dto);
+    System.out.println("Serialized GameStateDTO: " + serializedDTO);
+
+    // Create a ServerMessage with LOAD_GAME type
+    ServerMessage gameStateMessage = new ServerMessage(ServerMessageType.LOAD_GAME, dto);
 
     // Send the message to other players and observers
     Set<String> recipients = getRecipientsForGame(gameID);

@@ -5,16 +5,21 @@ import chess.ChessMove;
 import websocket.GameState;
 import chess.ChessPosition;
 import chess.ChessPiece;
-import chess.ChessBoard;
 import websocket.WebSocketMessageHandler;
 import websocket.commands.UserGameCommand;
 import com.google.gson.Gson;
 import chess.ChessGame;
+import websocket.dto.GameStateDTO;
+import java.util.Arrays;
+
+import java.util.Map;
 public class Main {
 
   private static ServerFacade serverFacade;
   private static WebSocketClient webSocketClient;
-  private static GameState currentGameState;
+
+  private static GameStateDTO currentGameStateDTO;
+
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
@@ -250,13 +255,6 @@ public class Main {
         webSocketClient.sendMessage(connectJson);
 
         currentGameID = gameID; // Update the currentGameID
-        currentGameState = serverFacade.getGameState(currentGameID);
-
-        if (currentGameState != null) {
-          drawChessBoard(true, currentGameState); // Assuming observing is always from the white perspective
-        } else {
-          System.out.println("Error: No game state available to draw the board.");
-        }
 
         System.out.println("Waiting for real-time updates...");
 
@@ -273,6 +271,7 @@ public class Main {
       }
     }
   }
+
 
 
 
@@ -380,22 +379,20 @@ public class Main {
   }
 
 
-  public static void updateGameState(GameState updatedState) {
-    currentGameState = updatedState;
+  public static void updateGameState(GameStateDTO updatedState) {
+    currentGameStateDTO = updatedState;
   }
   public static boolean isWhitePlayer() {
-    if (currentGameState == null) {
-      System.err.println("GameState is null. Cannot determine player color.");
+    if (currentGameStateDTO == null) {
+      System.err.println("GameStateDTO is null. Cannot determine player color.");
       return true; // Default orientation
     }
     // Assuming you have a method to get the player's color
-    ChessGame.TeamColor playerColor = currentGameState.getPlayerColor(serverFacade.getAuthToken());
-    if (playerColor == ChessGame.TeamColor.WHITE) {
-      return true;
-    } else {
-      return false;
-    }
+    String playerColorStr = currentGameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
+    ChessGame.TeamColor playerColor = ChessGame.TeamColor.valueOf(playerColorStr);
+    return playerColor == ChessGame.TeamColor.WHITE;
   }
+
 
   private static void showGameplayHelp() {
     System.out.println("In-Game Commands:");
@@ -441,14 +438,19 @@ public class Main {
       System.err.println("Error: Failed to send move command. " + e.getMessage());
     }
   }
-  private static boolean isValidMoveFormat(String move) {
-    return move.matches("^[a-h][1-8][a-h][1-8][QRBN]?$");
-  }
+  private static boolean isValidMoveFormat(String move) {return move.matches("^[a-h][1-8][a-h][1-8][QRBN]?$");}
   private static GameState fetchGameStateFromServer(int gameID) {
     // Logic to retrieve the game state (via WebSocket or HTTP)
     return null; // Replace with actual implementation
   }
-
+  private static ChessPiece.PieceType mapPromotionPiece(char promotionChar) {
+    switch (Character.toLowerCase(promotionChar)) {
+      case 'q': return ChessPiece.PieceType.QUEEN;
+      case 'r': return ChessPiece.PieceType.ROOK;
+      case 'b': return ChessPiece.PieceType.BISHOP;
+      case 'n': return ChessPiece.PieceType.KNIGHT;
+      default: return null; // Invalid promotion piece
+    }}
   private static ChessMove parseMove(String moveInput) {
     try {
       // Extract start and end positions from input
@@ -456,8 +458,8 @@ public class Main {
       String end = moveInput.substring(2, 4);   // e.g., "e4"
 
       // Convert start and end strings into ChessPosition objects
-      ChessPosition startPosition = parseChessPosition(start);
-      ChessPosition endPosition = parseChessPosition(end);
+      ChessPosition startPosition = parsePosition(start);
+      ChessPosition endPosition = parsePosition(end);
 
       // Parse promotion piece if provided (optional)
       ChessPiece.PieceType promotionPiece = null;
@@ -473,61 +475,53 @@ public class Main {
       return null;
     }
   }
-  private static ChessPosition parseChessPosition(String position) {
-    char column = position.charAt(0); // e.g., 'e'
-    int row = Character.getNumericValue(position.charAt(1)); // e.g., 2
+
+
+
+  private static ChessPosition parsePosition(String pos) {
+    char column = pos.charAt(0); // e.g., 'e'
+    int row = Character.getNumericValue(pos.charAt(1)); // e.g., 2
 
     int colIndex = column - 'a' + 1; // Convert 'a' to 1, 'b' to 2, etc.
     return new ChessPosition(row, colIndex);
   }
 
-  private static ChessPiece.PieceType mapPromotionPiece(char promotionChar) {
-    switch (Character.toLowerCase(promotionChar)) {
-      case 'q': return ChessPiece.PieceType.QUEEN;
-      case 'r': return ChessPiece.PieceType.ROOK;
-      case 'b': return ChessPiece.PieceType.BISHOP;
-      case 'n': return ChessPiece.PieceType.KNIGHT;
-      default: return null; // Invalid promotion piece
-    }
-  }
 
+  public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO) {
+    // Initialize an 8x8 array to represent the board
+    String[][] boardArray = new String[8][8];
 
-  public static void drawChessBoard(boolean whiteAtBottom, GameState gameState) {
-    System.out.println("Drawing board with gameState: " + gameState);
-    if (currentGameState == null || currentGameState.getChessGame() == null) {
-      System.out.println("Error: No game state available to draw the board.");
-      return;
+    // Fill the boardArray with empty spaces
+    for (int i = 0; i < 8; i++) {
+      Arrays.fill(boardArray[i], " ");
     }
 
-    // Get the current board state
-    ChessBoard board = currentGameState.getChessGame().getBoard();
+    // Populate the boardArray with pieces from the gameStateDTO's board map
+    Map<String, String> boardMap = gameStateDTO.getBoard();
 
-    // Print the board row by row
-    for (int row = 8; row >= 1; row--) { // Rows in chess are from 8 (top) to 1 (bottom)
-      for (int col = 1; col <= 8; col++) { // Columns are from a (1) to h (8)
-        ChessPosition position = new ChessPosition(row, col);
-        ChessPiece piece = board.getPiece(position);
+    for (Map.Entry<String, String> entry : boardMap.entrySet()) {
+      String position = entry.getKey(); // e.g., "e3"
+      String piece = entry.getValue();  // e.g., "♙"
 
-        // Display the piece if one exists, or a blank space otherwise
-        String squareContent = (piece != null) ? piece.toString() : " ";
-        boolean isLightSquare = (row + col) % 2 == 0;
+      // Convert position (e.g., "e3") to array indices
+      int rank = position.charAt(1) - '0'; // '1' to '8'
+      int file = position.charAt(0) - 'a'; // 'a' to 'h' mapped to 0 to 7
 
-        // Color the squares for display
-        String squareColor = isLightSquare ? "\u001B[47m" : "\u001B[40m"; // White or black background
-        String reset = "\u001B[0m"; // Reset terminal color
-        System.out.print(squareColor + squareContent + " " + reset);
+      int arrayRow = 8 - rank; // Convert rank to array index (0 to 7)
+      int arrayCol = file;     // File is already 0 to 7
+
+      // Place the piece in the boardArray
+      boardArray[arrayRow][arrayCol] = piece;
+    }
+
+    // Print the boardArray
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        System.out.print(boardArray[i][j] + " ");
       }
-      System.out.println(" " + row); // Add the row number to the right
+      System.out.println(" " + (8 - i)); // Print the rank number
     }
-
-    // Print column labels at the bottom
-    char[] columns = whiteAtBottom
-            ? new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}
-            : new char[]{'h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'};
-    for (char col : columns) {
-      System.out.print(col + " ");
-    }
-    System.out.println();
+    System.out.println("a b c d e f g h");
   }
 
 

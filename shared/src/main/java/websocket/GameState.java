@@ -4,6 +4,8 @@ import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessBoard;
+import chess.ChessPosition;
+import websocket.dto.GameStateDTO;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -180,5 +182,38 @@ public class GameState {
     public String getErrorMessage() {
       return !successful ? message : null;
     }
+  }
+
+  public GameStateDTO toDTO() {
+    GameStateDTO dto = new GameStateDTO();
+    dto.setGameID(this.gameID);
+    dto.setPlayers(this.players);
+
+    // Convert TeamColor to String for serialization
+    Map<String, String> colorMap = new HashMap<>();
+    for (Map.Entry<String, ChessGame.TeamColor> entry : playerColors.entrySet()) {
+      colorMap.put(entry.getKey(), entry.getValue().toString());
+    }
+    dto.setPlayerColors(colorMap);
+
+    dto.setObservers(this.observers);
+    dto.setGameOver(this.gameOver);
+
+    // Serialize the chessboard
+    Map<String, String> boardMap = new HashMap<>();
+    ChessBoard board = this.chessGame.getBoard();
+    for (int row = 1; row <= 8; row++) {
+      for (int col = 1; col <= 8; col++) {
+        int adjustedRow = 9 - row;
+        ChessPosition pos = new ChessPosition(adjustedRow, col);
+        ChessPiece piece = board.getPiece(pos);
+        if (piece != null) {
+          boardMap.put(pos.toString(), piece.toString());
+        }
+      }
+    }
+    dto.setBoard(boardMap);
+
+    return dto;
   }
 }

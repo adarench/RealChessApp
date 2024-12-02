@@ -1,5 +1,6 @@
 package websocket;
 
+import websocket.dto.GameStateDTO;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
 import ui.Main;
@@ -20,13 +21,11 @@ public class WebSocketMessageHandler {
     // Handle the message based on its type
     switch (serverMessage.getServerMessageType()) {
       case LOAD_GAME:
-        // Update local game state
-        System.out.println("Received LOAD_GAME message. Updating local state.");
-        GameState updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameState.class);
-        Main.updateGameState(updatedState); // Call static method in Main
-        // Redraw the chessboard
-        System.out.println("Redrawing chessboard with updated state...");
-        Main.drawChessBoard(Main.isWhitePlayer(), updatedState); // Call static method in Main
+        // Deserialize to GameStateDTO
+        GameStateDTO updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameStateDTO.class);
+        System.out.println("Received GameStateDTO: " + gson.toJson(updatedState));
+        Main.updateGameState(updatedState); // Update the game state in Main
+        Main.drawChessBoard(Main.isWhitePlayer(), updatedState); // Redraw the chessboard
         break;
       case NOTIFICATION:
         // Display notification
