@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import chess.ChessGame;
 import websocket.dto.GameStateDTO;
 import java.util.Arrays;
+import java.util.Collections;
 
 import java.util.Map;
 public class Main {
@@ -35,7 +36,7 @@ public class Main {
 
     System.out.println("Connected to server at: " + serverUrl);
 
-    // Initialize WebSocketClient using Singleton
+    // Initialize WebSocketClient
     webSocketClient = WebSocketClient.getInstance();
     try {
       webSocketClient.connect(webSocketUrl);
@@ -45,7 +46,25 @@ public class Main {
     }
     serverFacade = new ServerFacade(serverUrl);
 
-    // Removed Duplicate Initialization
+    Thread messageProcessingThread = new Thread(() -> {
+      while (true) {
+        try {
+          String message = webSocketClient.receiveMessage();
+          if (message != null) {
+            System.out.println("Processing message: " + message);
+            WebSocketMessageHandler.handleMessage(message);
+          } else {
+            System.out.println("Received null message from receiveMessage()");
+          }
+        } catch (Exception e) {
+          System.err.println("Exception in message processing thread: " + e.getMessage());
+          e.printStackTrace();
+        }
+      }
+    });
+    messageProcessingThread.setDaemon(true);
+    messageProcessingThread.start();
+
 
     showPreloginMenu();
   }
@@ -387,11 +406,21 @@ public class Main {
       System.err.println("GameStateDTO is null. Cannot determine player color.");
       return true; // Default orientation
     }
-    // Assuming you have a method to get the player's color
-    String playerColorStr = currentGameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
-    ChessGame.TeamColor playerColor = ChessGame.TeamColor.valueOf(playerColorStr);
-    return playerColor == ChessGame.TeamColor.WHITE;
+    try {
+      String playerColorStr = currentGameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
+      if (playerColorStr == null) {
+        System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
+        return true; // Default orientation
+      }
+      ChessGame.TeamColor playerColor = ChessGame.TeamColor.valueOf(playerColorStr);
+      return playerColor == ChessGame.TeamColor.WHITE;
+    } catch (Exception e) {
+      System.err.println("Exception in isWhitePlayer: " + e.getMessage());
+      e.printStackTrace();
+      return true; // Default orientation
+    }
   }
+
 
 
   private static void showGameplayHelp() {
@@ -429,10 +458,6 @@ public class Main {
       );
 
       System.out.println("Waiting for server response...");
-      String serverUpdate = webSocketClient.receiveMessage();
-      if (serverUpdate != null) {
-        WebSocketMessageHandler.handleMessage(serverUpdate);
-      }
 
     } catch (Exception e) {
       System.err.println("Error: Failed to send move command. " + e.getMessage());
@@ -451,30 +476,24 @@ public class Main {
       case 'n': return ChessPiece.PieceType.KNIGHT;
       default: return null; // Invalid promotion piece
     }}
-  private static ChessMove parseMove(String moveInput) {
-    try {
-      // Extract start and end positions from input
-      String start = moveInput.substring(0, 2); // e.g., "e2"
-      String end = moveInput.substring(2, 4);   // e.g., "e4"
+  public static ChessMove parseMove(String input) {
+    // Parse start and end positions
+    int startCol = input.charAt(0) - 'a' + 1;
+    int startRow = Character.getNumericValue(input.charAt(1));
+    int endCol = input.charAt(2) - 'a' + 1;
+    int endRow = Character.getNumericValue(input.charAt(3));
 
-      // Convert start and end strings into ChessPosition objects
-      ChessPosition startPosition = parsePosition(start);
-      ChessPosition endPosition = parsePosition(end);
+    // Do not adjust rows
 
-      // Parse promotion piece if provided (optional)
-      ChessPiece.PieceType promotionPiece = null;
-      if (moveInput.length() == 5) {
-        char promotionChar = moveInput.charAt(4); // e.g., 'q' for queen
-        promotionPiece = mapPromotionPiece(promotionChar);
-      }
+    ChessPosition startPos = new ChessPosition(startRow, startCol);
+    ChessPosition endPos = new ChessPosition(endRow, endCol);
 
-      // Return the ChessMove object
-      return new ChessMove(startPosition, endPosition, promotionPiece);
-    } catch (Exception e) {
-      // Return null for invalid input
-      return null;
-    }
+    // Since this is not a promotion move, we pass null for promotionPiece
+    return new ChessMove(startPos, endPos, null);
   }
+
+
+
 
 
 
@@ -488,30 +507,40 @@ public class Main {
 
 
   public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO) {
-    // Initialize an 8x8 array to represent the board
     String[][] boardArray = new String[8][8];
 
-    // Fill the boardArray with empty spaces
+    // Initialize the boardArray with empty spaces
     for (int i = 0; i < 8; i++) {
       Arrays.fill(boardArray[i], " ");
     }
 
     // Populate the boardArray with pieces from the gameStateDTO's board map
     Map<String, String> boardMap = gameStateDTO.getBoard();
-
     for (Map.Entry<String, String> entry : boardMap.entrySet()) {
-      String position = entry.getKey(); // e.g., "e3"
-      String piece = entry.getValue();  // e.g., "♙"
+      String position = entry.getKey();
+      String piece = entry.getValue();
 
-      // Convert position (e.g., "e3") to array indices
-      int rank = position.charAt(1) - '0'; // '1' to '8'
-      int file = position.charAt(0) - 'a'; // 'a' to 'h' mapped to 0 to 7
+      int file = position.charAt(0) - 'a';                      // 'a' to 'h' mapped to 0 to 7
+      int rank = Character.getNumericValue(position.charAt(1)); // '1' to '8' mapped to 1 to 8
 
-      int arrayRow = 8 - rank; // Convert rank to array index (0 to 7)
+      int arrayRow = 8 - rank; // Adjust rank to array index (0 to 7)
       int arrayCol = file;     // File is already 0 to 7
 
-      // Place the piece in the boardArray
       boardArray[arrayRow][arrayCol] = piece;
+    }
+
+    // Flip the board for black's perspective if needed
+    if (!isWhitePlayer) {
+      // Reverse the rows
+      for (int i = 0; i < 4; i++) {
+        String[] temp = boardArray[i];
+        boardArray[i] = boardArray[7 - i];
+        boardArray[7 - i] = temp;
+      }
+      // Reverse each row
+      for (int i = 0; i < 8; i++) {
+        Collections.reverse(Arrays.asList(boardArray[i]));
+      }
     }
 
     // Print the boardArray
@@ -519,10 +548,13 @@ public class Main {
       for (int j = 0; j < 8; j++) {
         System.out.print(boardArray[i][j] + " ");
       }
-      System.out.println(" " + (8 - i)); // Print the rank number
+      System.out.println(" " + (8 - i)); // Print rank numbers
     }
     System.out.println("a b c d e f g h");
   }
+
+
+
 
 
 

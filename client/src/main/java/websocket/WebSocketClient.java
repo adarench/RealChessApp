@@ -136,9 +136,14 @@ public class WebSocketClient {
       String message = data.toString();
       System.out.println("Message received: " + message);
 
-      // Process the message without blocking
-      CompletableFuture.runAsync(() -> WebSocketMessageHandler.handleMessage(message));
-      messageQueue.offer(message); // Queue the message for other use
+      // Enqueue the message for processing
+      messageQueue.offer(message);
+      System.out.println("Message queued for processing: " + message);
+
+      // Request the next message
+      webSocket.request(1);
+
+      // Return a completed future to indicate we're ready for the next message
       return CompletableFuture.completedFuture(null);
     }
 

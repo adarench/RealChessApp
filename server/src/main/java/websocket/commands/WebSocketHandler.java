@@ -275,13 +275,11 @@ public class WebSocketHandler {
   }
 
   private ServerMessage handleMakeMove(UserGameCommand command) {
-
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
     ChessMove move = command.getMove();
+
     System.out.println("handleMakeMove called for gameID: " + gameID + ", authToken: " + authToken);
-
-
 
     // Validate the authToken using AuthDAO
     String userName;
@@ -307,8 +305,13 @@ public class WebSocketHandler {
     System.out.println("MoveResult: " + moveResult.isSuccessful() + ", Message: " + moveResult.getErrorMessage());
 
     if (!moveResult.isSuccessful()) {
-      // Return an error message to the client
-      return new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
+      // Send an error message back to the moving player
+      ServerMessage errorMessage = new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
+      Session recipientSession = server.getSessionByAuthToken(authToken);
+      if (recipientSession != null && recipientSession.isOpen()) {
+        server.sendMessage(recipientSession, gson.toJson(errorMessage));
+      }
+      return null; // We've already sent the error message
     }
 
     // Convert GameState to GameStateDTO
@@ -321,29 +324,27 @@ public class WebSocketHandler {
     // Create a ServerMessage with LOAD_GAME type
     ServerMessage gameStateMessage = new ServerMessage(ServerMessageType.LOAD_GAME, dto);
 
-    // Send the message to other players and observers
+    // Send the updated game state to all players and observers, including the moving player
     Set<String> recipients = getRecipientsForGame(gameID);
-    recipients.remove(authToken); // Exclude the moving player
+    // Ensure the moving player is included (you can remove the following line if it's already included)
+    // recipients.add(authToken);
+
+    System.out.println("Recipients for game " + gameID + ": " + recipients);
 
     for (String recipientAuthToken : recipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
         server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
+        System.out.println("Sent LOAD_GAME to session: " + recipientSession);
       }
     }
-    // Send a NOTIFICATION message about the move
-    String notificationMessage = "A move was made: " + move.getStartPosition() + " -> " + move.getEndPosition();
-    for (String recipientAuthToken : recipients) {
-      Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
-      if (recipientSession != null && recipientSession.isOpen()) {
-        ServerMessage notification = new ServerMessage(ServerMessageType.NOTIFICATION, notificationMessage);
-        server.sendMessage(recipientSession, gson.toJson(notification));
-      }
-    }
-    // Return the updated game state to the moving player
+
     System.out.println("MAKE_MOVE successful for gameID: " + gameID + ", move: " + move);
-    return gameStateMessage;
+
+    // Return null since we've already sent the necessary messages
+    return null;
   }
+
 
 
 }
