@@ -26,6 +26,7 @@ public class Main {
 
 
   public static boolean isWhitePlayer = true; // Set this based on the player's role
+  private static volatile GameStateDTO gameStateDTO;
 
 
 
@@ -34,7 +35,7 @@ public class Main {
   private static ServerFacade serverFacade;
   private static WebSocketClient webSocketClient;
 
-  private static GameStateDTO currentGameStateDTO;
+
 
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
@@ -60,6 +61,9 @@ public class Main {
       return; // Exit if WebSocket connection fails
     }
     serverFacade = new ServerFacade(serverUrl);
+    //gameStateDTO = getInitialGameState();
+
+
 
     Thread messageProcessingThread = new Thread(() -> {
       while (true) {
@@ -83,6 +87,56 @@ public class Main {
 
     showPreloginMenu();
   }
+
+  private static GameStateDTO getInitialGameState() {
+    // Initialize a new game state
+    GameStateDTO initialState = new GameStateDTO();
+
+    // Example: Setting up pieces in their starting positions
+    Map<String, String> board = initialState.getBoard();
+
+    // Initialize White pieces
+    board.put("a1", "♖"); // Rook
+    board.put("b1", "♘"); // Knight
+    board.put("c1", "♗"); // Bishop
+    board.put("d1", "♕"); // Queen
+    board.put("e1", "♔"); // King
+    board.put("f1", "♗"); // Bishop
+    board.put("g1", "♘"); // Knight
+    board.put("h1", "♖"); // Rook
+    for (char file = 'a'; file <= 'h'; file++) {
+      String position = "" + file + "2";
+      board.put(position, "♙"); // Pawns
+    }
+
+    // Initialize Black pieces
+    board.put("a8", "♜"); // Rook
+    board.put("b8", "♞"); // Knight
+    board.put("c8", "♝"); // Bishop
+    board.put("d8", "♛"); // Queen
+    board.put("e8", "♚"); // King
+    board.put("f8", "♝"); // Bishop
+    board.put("g8", "♞"); // Knight
+    board.put("h8", "♜"); // Rook
+    for (char file = 'a'; file <= 'h'; file++) {
+      String position = "" + file + "7";
+      board.put(position, "♟"); // Pawns
+    }
+
+    // Set player colors (replace with actual auth tokens)
+    Map<String, String> playerColors = initialState.getPlayerColors();
+    playerColors.put("your-auth-token", "WHITE");
+    playerColors.put("opponent-auth-token", "BLACK");
+
+    // Initialize other game state parameters as needed
+    initialState.setGameOver(false);
+
+    return initialState;
+  }
+
+
+
+
 
   private static void showPreloginMenu() {
     while (true) {
@@ -360,7 +414,7 @@ public class Main {
 
   private static void gameplayLoop() {
     while (true) {
-      System.out.println("\nEnter a command: makemove, resign, leave, help");
+      System.out.println("\nEnter a command: makemove, resign, leave, redraw, help");
       System.out.print("> ");
       String command = scanner.nextLine().trim().toLowerCase();
 
@@ -378,8 +432,12 @@ public class Main {
           showGameplayHelp();
           break;
         case "redraw":
-          drawChessBoard(isWhitePlayer, gameStateDTO);
-          System.out.println("Board has been redrawn.");
+          if (gameStateDTO != null) {
+            drawChessBoard(isWhitePlayer, gameStateDTO);
+            System.out.println("Board has been redrawn.");
+          } else {
+            System.out.println("Game state is not available. Please wait for the game to start.");
+          }
           break;
         default:
           System.out.println("Invalid command. Type 'help' for a list of commands.");
@@ -422,15 +480,30 @@ public class Main {
 
 
   public static void updateGameState(GameStateDTO updatedState) {
-    currentGameStateDTO = updatedState;
+    System.out.println("Updating gameStateDTO with new state.");
+    gameStateDTO = updatedState;
+
+    // Update player color based on the updated game state
+    String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
+    if (playerColorStr != null) {
+      isWhitePlayer = "WHITE".equalsIgnoreCase(playerColorStr);
+      System.out.println("Player color set to: " + playerColorStr);
+    } else {
+      System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
+      isWhitePlayer = true; // Default to white if color not found
+    }
+
+    System.out.println("gameStateDTO updated: " + new Gson().toJson(gameStateDTO));
   }
+
+
   public static boolean isWhitePlayer() {
-    if (currentGameStateDTO == null) {
+    if (gameStateDTO == null) {
       System.err.println("GameStateDTO is null. Cannot determine player color.");
       return true; // Default orientation
     }
     try {
-      String playerColorStr = currentGameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
+      String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
       if (playerColorStr == null) {
         System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
         return true; // Default orientation
@@ -443,6 +516,7 @@ public class Main {
       return true; // Default orientation
     }
   }
+
 
 
 
@@ -621,10 +695,9 @@ public class Main {
         System.out.print(displayRow + " "); // Row numbers on the left
 
         for (int col = 0; col < 8; col++) {
-          int displayCol = isWhitePlayer ? col : col;
 
-          String piece = boardArray[row][displayCol];
-          String squareColor = ((row + displayCol) % 2 == 0) ? ANSI_LIGHT_SQUARE : ANSI_DARK_SQUARE;
+          String piece = boardArray[row][col];
+          String squareColor = ((row + col) % 2 == 0) ? ANSI_LIGHT_SQUARE : ANSI_DARK_SQUARE;
 
           // Ensure full square coloring
           String squareContent = piece.trim().isEmpty() ? "   " : " " + piece + " ";
