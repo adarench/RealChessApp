@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collection;
+
 import chess.InvalidMoveException;
 
 
@@ -23,6 +23,7 @@ public class GameState {
   private final Map<String, ChessGame.TeamColor> playerColors = new HashMap<>(); // authToken -> TeamColor
 
   private final Set<String> observers = new HashSet<>();
+  private String winnerAuthToken;
   private boolean gameOver;
 
   public GameState(int gameID) {
@@ -31,6 +32,7 @@ public class GameState {
     this.gameOver = false;
   }
 
+  // Optional: Method to get the winner's username
 
   public void setGameOver(boolean gameOver) {
     this.gameOver = gameOver;
@@ -59,6 +61,30 @@ public class GameState {
   }
 
 
+  public synchronized boolean markResigned(String authToken) {
+    if (!players.containsKey(authToken)) {
+      return false; // Player not part of the game
+    }
+    this.gameOver = true;
+    this.winnerAuthToken = getOpponentAuthToken(authToken);
+    return true;
+  }
+
+  private String getOpponentAuthToken(String authToken) {
+    for (String token : players.keySet()) {
+      if (!token.equals(authToken)) {
+        return token;
+      }
+    }
+    return null; // No opponent found (e.g., observer scenario)
+  }
+
+  public String getWinnerUsername() {
+    if (winnerAuthToken != null) {
+      return players.get(winnerAuthToken);
+    }
+    return null;
+  }
 
 
 

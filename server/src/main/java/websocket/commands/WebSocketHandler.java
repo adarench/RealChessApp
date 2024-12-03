@@ -236,7 +236,7 @@ public class WebSocketHandler {
     }
 
     // Resign the player
-    boolean resigned = gameState.removePlayer(authToken);
+    boolean resigned = gameState.markResigned(authToken);
 
     if (resigned) {
       // Mark the game as over if only one player remains

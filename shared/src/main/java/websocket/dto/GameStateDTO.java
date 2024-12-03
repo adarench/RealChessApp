@@ -1,5 +1,7 @@
 package websocket.dto;
 
+import websocket.GameState;
+
 import java.util.Map;
 import java.util.Set;
 
