@@ -16,6 +16,20 @@ import java.util.Collections;
 import java.util.Map;
 public class Main {
 
+  //colors
+
+  public static final String ANSI_RESET = "\u001B[0m";
+  public static final String ANSI_LIGHT_SQUARE = "\u001B[47m"; // Light gray background
+  public static final String ANSI_DARK_SQUARE = "\u001B[40m";  // Dark black background
+  public static final String ANSI_WHITE_PIECE = "\u001B[37m";  // White pieces
+  public static final String ANSI_BLACK_PIECE = "\u001B[30m";  // Black pieces
+
+
+
+
+
+
+
   private static ServerFacade serverFacade;
   private static WebSocketClient webSocketClient;
 
@@ -264,11 +278,15 @@ public class Main {
           System.out.println("Error: Unable to find game ID for the specified game name.");
           return;
         }
-
+        String observerAuthToken = serverFacade.getAuthToken();
+        if (observerAuthToken == null || observerAuthToken.isEmpty()) {
+          System.out.println("Error: Observer is not logged in.");
+          return;
+        }
         // Send a WebSocket CONNECT command for observing the game
         UserGameCommand connectCommand = new UserGameCommand();
         connectCommand.setCommandType(UserGameCommand.CommandType.CONNECT);
-        connectCommand.setAuthToken(serverFacade.getAuthToken());
+        connectCommand.setAuthToken(observerAuthToken);
         connectCommand.setGameID(gameID);
         String connectJson = new Gson().toJson(connectCommand);
         webSocketClient.sendMessage(connectJson);
@@ -504,9 +522,23 @@ public class Main {
     int colIndex = column - 'a' + 1; // Convert 'a' to 1, 'b' to 2, etc.
     return new ChessPosition(row, colIndex);
   }
+  private static String getColoredPiece(String piece) {
+    if (piece == null || piece.trim().isEmpty()) {
+      return " "; // Empty square
+    }
+
+    // Determine if the piece is white or black
+    boolean isWhitePiece = Character.isUpperCase(piece.charAt(0));
+
+    String pieceColor = isWhitePiece ? ANSI_WHITE_PIECE : ANSI_BLACK_PIECE;
+
+    // Return the colored piece symbol
+    return pieceColor + piece + ANSI_RESET;
+  }
 
 
-  public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO) {
+
+  /*public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO) {
     String[][] boardArray = new String[8][8];
 
     // Initialize the boardArray with empty spaces
@@ -551,7 +583,72 @@ public class Main {
       System.out.println(" " + (8 - i)); // Print rank numbers
     }
     System.out.println("a b c d e f g h");
+  }*/
+
+  public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO) {
+    try {
+      Map<String, String> boardMap = gameStateDTO.getBoard();
+
+      // Initialize an 8x8 array to represent the board
+      String[][] boardArray = new String[8][8];
+
+      // Fill the boardArray with empty strings
+      for (int i = 0; i < 8; i++) {
+        Arrays.fill(boardArray[i], " ");
+      }
+
+      // Place pieces on the boardArray
+      for (Map.Entry<String, String> entry : boardMap.entrySet()) {
+        String position = entry.getKey();
+        String piece = entry.getValue();
+
+        int row = 8 - Character.getNumericValue(position.charAt(1)); // Convert '1'-'8' to 7-0
+        int col = position.charAt(0) - 'a'; // Convert 'a'-'h' to 0-7
+
+        boardArray[row][col] = piece;
+      }
+
+      // Print the board
+      System.out.println();
+      for (int row = 0; row < 8; row++) {
+        int displayRow = isWhitePlayer ? 8 - row : row + 1;
+        System.out.print(displayRow + " "); // Row numbers on the left
+
+        for (int col = 0; col < 8; col++) {
+          int displayCol = isWhitePlayer ? col : 7 - col;
+
+          String piece = boardArray[row][displayCol];
+          String squareColor = ((row + displayCol) % 2 == 0) ? ANSI_LIGHT_SQUARE : ANSI_DARK_SQUARE;
+
+          // Ensure full square coloring
+          String squareContent = piece.trim().isEmpty() ? "   " : " " + piece + " ";
+          System.out.print(squareColor + squareContent + squareColor + ANSI_RESET);
+        }
+
+        // Reset background color at the end of the row and print the row number
+        System.out.println(ANSI_RESET + " " + displayRow);
+      }
+
+      // Print column labels
+      System.out.print("  "); // Space before column labels
+      for (int col = 0; col < 8; col++) {
+        char colLabel = (char) ('a' + (isWhitePlayer ? col : 7 - col));
+        System.out.print(" " + colLabel + " ");
+      }
+      System.out.println(); // Move to the next line after column labels
+    } catch (Exception e) {
+      System.err.println("Exception in drawChessBoard: " + e.getMessage());
+      e.printStackTrace();
+    }
   }
+
+
+
+
+
+
+
+
 
 
 

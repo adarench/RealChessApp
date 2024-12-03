@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collections;
 import com.google.gson.Gson;
 import chess.ChessGame;
 
@@ -261,18 +262,22 @@ public class WebSocketHandler {
   }
 
   public Set<String> getRecipientsForGame(int gameID) {
-
-    if (!gameStates.containsKey(gameID)) {
-      return Set.of(); // Return an empty set if the game doesn't exist
+    GameState gameState = gameStates.get(gameID);
+    if (gameState == null) {
+      return Collections.emptySet();
     }
 
-    GameState gameState = gameStates.get(gameID);
-    Set<String> recipients = new HashSet<>(gameState.getPlayers().keySet());
-    System.out.println("Recipients for game " + gameID + ": " + recipients);
+    Set<String> recipients = new HashSet<>();
 
+    // Add all players
+    recipients.addAll(gameState.getPlayers().keySet());
+
+    // Add all observers
     recipients.addAll(gameState.getObservers());
+
     return recipients;
   }
+
 
   private ServerMessage handleMakeMove(UserGameCommand command) {
     int gameID = command.getGameID();
@@ -326,8 +331,8 @@ public class WebSocketHandler {
 
     // Send the updated game state to all players and observers, including the moving player
     Set<String> recipients = getRecipientsForGame(gameID);
-    // Ensure the moving player is included (you can remove the following line if it's already included)
-    // recipients.add(authToken);
+    System.out.println("Recipients for game " + gameID + ": " + recipients);
+
 
     System.out.println("Recipients for game " + gameID + ": " + recipients);
 
@@ -336,6 +341,23 @@ public class WebSocketHandler {
       if (recipientSession != null && recipientSession.isOpen()) {
         server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
         System.out.println("Sent LOAD_GAME to session: " + recipientSession);
+      }
+    }
+
+
+
+    String notificationText = userName + " has made a move.";
+    ServerMessage notificationMessage = new ServerMessage(ServerMessageType.NOTIFICATION, notificationText);
+
+    // Optionally exclude the moving player from receiving the notification
+    Set<String> notificationRecipients = new HashSet<>(recipients);
+    notificationRecipients.remove(authToken); // Exclude the moving player if desired
+
+    for (String recipientAuthToken : notificationRecipients) {
+      Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
+      if (recipientSession != null && recipientSession.isOpen()) {
+        server.sendMessage(recipientSession, gson.toJson(notificationMessage));
+        System.out.println("Sent NOTIFICATION to authToken: " + recipientAuthToken);
       }
     }
 
