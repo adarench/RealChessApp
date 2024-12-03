@@ -5,16 +5,21 @@ public class ServerMessage {
     private String message;       // For notifications or general messages
     private String errorMessage;  // For error details
     private Object game;          // For game data
+    private Object data;
+
 
     public enum ServerMessageType {
         LOAD_GAME,
         ERROR,
-        NOTIFICATION
+        NOTIFICATION,
+        LEGAL_MOVES
     }
 
     // Constructor for general messages
-    public ServerMessage(ServerMessageType type) {
+
+    public void validateServerMessage(ServerMessageType type, Object data) {
         this.serverMessageType = type;
+        this.data = data;
     }
 
     // Constructor with message content
@@ -48,6 +53,13 @@ public class ServerMessage {
 
     public Object getGame() {
         return this.game;
+    }
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
     }
 
     // equals and hashCode methods (omitted for brevity)

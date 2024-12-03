@@ -25,6 +25,7 @@ public class Main {
   public static final String ANSI_BLACK_PIECE = "\u001B[30m";  // Black pieces
 
 
+  public static boolean isWhitePlayer = true; // Set this based on the player's role
 
 
 
@@ -376,6 +377,10 @@ public class Main {
         case "help":
           showGameplayHelp();
           break;
+        case "redraw":
+          drawChessBoard(isWhitePlayer, gameStateDTO);
+          System.out.println("Board has been redrawn.");
+          break;
         default:
           System.out.println("Invalid command. Type 'help' for a list of commands.");
       }
@@ -608,14 +613,15 @@ public class Main {
         boardArray[row][col] = piece;
       }
 
+
       // Print the board
       System.out.println();
       for (int row = 0; row < 8; row++) {
-        int displayRow = isWhitePlayer ? 8 - row : row + 1;
+        int displayRow = isWhitePlayer ? 8 - row : 8-row;
         System.out.print(displayRow + " "); // Row numbers on the left
 
         for (int col = 0; col < 8; col++) {
-          int displayCol = isWhitePlayer ? col : 7 - col;
+          int displayCol = isWhitePlayer ? col : col;
 
           String piece = boardArray[row][displayCol];
           String squareColor = ((row + displayCol) % 2 == 0) ? ANSI_LIGHT_SQUARE : ANSI_DARK_SQUARE;
@@ -632,7 +638,7 @@ public class Main {
       // Print column labels
       System.out.print("  "); // Space before column labels
       for (int col = 0; col < 8; col++) {
-        char colLabel = (char) ('a' + (isWhitePlayer ? col : 7 - col));
+        char colLabel = (char) ('a' + (isWhitePlayer ? col : col));
         System.out.print(" " + colLabel + " ");
       }
       System.out.println(); // Move to the next line after column labels

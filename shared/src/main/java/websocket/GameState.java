@@ -225,13 +225,12 @@ public class GameState {
     dto.setObservers(this.observers);
     dto.setGameOver(this.gameOver);
 
-    // Serialize the chessboard
+    // Serialize the chessboard consistently from White's perspective
     Map<String, String> boardMap = new HashMap<>();
     ChessBoard board = this.chessGame.getBoard();
     for (int row = 1; row <= 8; row++) {
       for (int col = 1; col <= 8; col++) {
-        int adjustedRow = 9 - row;
-        ChessPosition pos = new ChessPosition(adjustedRow, col);
+        ChessPosition pos = new ChessPosition(row, col); // row 1 is White's side
         ChessPiece piece = board.getPiece(pos);
         if (piece != null) {
           boardMap.put(pos.toString(), piece.toString());
@@ -242,4 +241,5 @@ public class GameState {
 
     return dto;
   }
+
 }
