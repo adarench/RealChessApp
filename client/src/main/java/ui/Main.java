@@ -543,7 +543,7 @@ public class Main {
     if(!isObserver){String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
       if (playerColorStr != null) {
         isWhitePlayer = "WHITE".equalsIgnoreCase(playerColorStr);
-        System.out.println("Player color set to: " + playerColorStr);
+        //System.out.println("Player color set to: " + playerColorStr);
       } else {
         System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
         isWhitePlayer = true; // Default to white if color not found
@@ -867,7 +867,7 @@ public class Main {
       return;
     }
 
-    System.out.println("Parsed Move: " + move.toString());
+    //System.out.println("Parsed Move: " + move.toString());
 
     // Send move via WebSocketClient
     try {
