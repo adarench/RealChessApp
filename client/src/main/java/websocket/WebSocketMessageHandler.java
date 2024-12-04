@@ -29,7 +29,7 @@ public class WebSocketMessageHandler {
           System.out.println("Board map in GameStateDTO: " + updatedState.getBoard());
 
           Main.updateGameState(updatedState); // Update the game state in Main
-          Main.drawChessBoard(Main.isWhitePlayer(), updatedState); // Redraw the chessboard
+          Main.drawChessBoard(Main.isWhitePlayer, updatedState, Main.getHighlightedSquares());
           break;
         case NOTIFICATION:
           // Display notification
