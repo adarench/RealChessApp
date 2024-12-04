@@ -364,16 +364,22 @@ public class Main {
     if (response.startsWith("Observing game:")) {
       try {
         isObserver = true;
+        System.out.println("Observer status: " + isObserver);
+
         isInGame = true;
         // Fetch the game ID by name
         int gameID = serverFacade.getGameIdByName(gameName);
         if (gameID == -1) {
           System.out.println("Error: Unable to find game ID for the specified game name.");
+          isObserver = false; // Reset flag on failure
+          isInGame = false;
           return;
         }
         String observerAuthToken = serverFacade.getAuthToken();
         if (observerAuthToken == null || observerAuthToken.isEmpty()) {
           System.out.println("Error: Observer is not logged in.");
+          isObserver = false; // Reset flag on failure
+          isInGame = false;
           return;
         }
         // Send a WebSocket CONNECT command for observing the game
@@ -388,16 +394,11 @@ public class Main {
 
         System.out.println("Waiting for real-time updates...");
 
-        // Start listening for real-time updates
-        while (true) {
-          String serverUpdate = webSocketClient.receiveMessage();
-          if (serverUpdate != null) {
-            System.out.println("Game update received: " + serverUpdate);
-            WebSocketMessageHandler.handleMessage(serverUpdate);
-          }
-        }
+        gameplayLoop();
       } catch (Exception e) {
         System.err.println("Error observing game via WebSocket: " + e.getMessage());
+        isObserver = false; // Reset flag on exception
+        isInGame = false;
       }
     }
   }
@@ -458,10 +459,18 @@ public class Main {
 
       switch (command) {
         case "makemove":
-          makeMove();
+          if (isObserver) {
+            System.out.println("Error: Observers cannot make moves.");
+          } else {
+            makeMove();
+          }
           break;
         case "resign":
-          resign();
+          if (isObserver) {
+            System.out.println("Error: Observers cannot resign.");
+          } else {
+            resign();
+          }
           break;
         case "leave":
           leaveGame();
@@ -480,6 +489,10 @@ public class Main {
           break;
         default:
           System.out.println("Invalid command. Type 'help' for a list of commands.");
+      }
+      if (shouldTransitionToPostLogin.get()) {
+        shouldTransitionToPostLogin.set(false); // Reset the flag
+        transitionToPostGame();
       }
     }
   }
@@ -537,7 +550,7 @@ public class Main {
 
 
 
-  public static void updateGameState(GameStateDTO updatedState) {
+  public static synchronized void updateGameState(GameStateDTO updatedState) {
     //System.out.println("Updating gameStateDTO with new state.");
     gameStateDTO = updatedState;
     if(!isObserver){String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
@@ -700,8 +713,84 @@ public class Main {
   }
 
 
-
   private static void highlightLegalMoves() {
+    System.out.print("Enter the square of the piece to highlight (e.g., e2): ");
+    String input = scanner.nextLine().trim().toLowerCase();
+
+    // Validate input format
+    if (!isValidSquareFormat(input)) {
+      System.out.println("Error: Invalid square format. Please enter a valid square (e.g., e2).");
+      return;
+    }
+
+    // Check if the selected square has a piece
+    if (!gameStateDTO.getBoard().containsKey(input)) {
+      System.out.println("Error: No piece found at " + input + ".");
+      return;
+    }
+
+    // For players, ensure they can only highlight their own pieces
+    if (!isObserver) {
+      String playerColor = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
+      String pieceSymbol = gameStateDTO.getBoard().get(input);
+      boolean isWhite = isWhitePiece(pieceSymbol);
+
+      if ((isWhite && !isWhitePlayer) || (!isWhite && isWhitePlayer)) {
+        System.out.println("Error: You can only highlight your own pieces.");
+        return;
+      }
+    }
+
+    // Convert input to ChessPosition
+    ChessPosition selectedPosition = convertSquareToChessPosition(input);
+    System.out.println("Selected Position: " + selectedPosition.getRow() + ", " + selectedPosition.getColumn()); // Debug Statement
+
+    // Determine the piece's color if observer
+    ChessGame.TeamColor originalTeamTurn = chessGame.getTeamTurn();
+    if (isObserver) {
+      String pieceSymbol = gameStateDTO.getBoard().get(input);
+      ChessGame.TeamColor pieceColor = isWhitePiece(pieceSymbol) ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
+      chessGame.setTeamTurn(pieceColor); // Temporarily set team turn to piece's color
+    }
+
+    // Get legal moves from ChessGame
+    Collection<ChessMove> legalMovesCollection = chessGame.validMoves(selectedPosition);
+
+    // Restore original team turn if observer
+    if (isObserver) {
+      chessGame.setTeamTurn(originalTeamTurn);
+    }
+
+    if (legalMovesCollection == null || legalMovesCollection.isEmpty()) {
+      System.out.println("No legal moves available for the selected piece.");
+      return;
+    }
+
+    System.out.println("Legal moves found: " + legalMovesCollection.size()); // Debug Statement
+
+    // Convert ChessMove to square keys
+    Set<String> legalMoveSquares = new HashSet<>();
+    for (ChessMove move : legalMovesCollection) {
+      String toSquare = move.getEndPosition().toString(); // e.g., "e4"
+      legalMoveSquares.add(toSquare);
+    }
+
+    // Update highlightedSquares
+    highlightedSquares.clear();
+    highlightedSquares.add(input); // Highlight selected square
+    highlightedSquares.addAll(legalMoveSquares); // Highlight legal move squares
+
+    // Redraw the board with highlights
+    drawChessBoard(isWhitePlayer, gameStateDTO, highlightedSquares);
+    System.out.println("Legal moves for " + input + " have been highlighted.");
+  }
+
+
+
+
+
+
+  /*private static void highlightLegalMoves() {
     System.out.print("Enter the square of the piece to highlight (e.g., e2): ");
     String input = scanner.nextLine().trim().toLowerCase();
 
@@ -760,7 +849,7 @@ public class Main {
     // Redraw the board with highlights
     drawChessBoard(isWhitePlayer, gameStateDTO, highlightedSquares);
     System.out.println("Legal moves for " + input + " have been highlighted.");
-  }
+  }*/
 
 
   private static ChessPiece.PieceType getPieceType(String piece) {
@@ -1070,18 +1159,6 @@ public class Main {
     char column = (char) ('a' + col - 1);
     return "" + column + row;
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

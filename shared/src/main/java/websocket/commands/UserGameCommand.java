@@ -15,13 +15,15 @@ public class UserGameCommand {
     private String authToken;
     private Integer gameID;
     private ChessMove move; // Only applicable for MAKE_MOVE commands
+    private String pieceSquare;
 
 
     public enum CommandType {
         CONNECT,
         MAKE_MOVE,
         LEAVE,
-        RESIGN
+        RESIGN,
+        HIGHLIGHT
     }
 
     public CommandType getCommandType() {
@@ -59,6 +61,14 @@ public class UserGameCommand {
 
     public void setMove(ChessMove move) {
         this.move = move;
+    }
+
+    public String getPieceSquare() {
+        return pieceSquare;
+    }
+
+    public void setPieceSquare(String pieceSquare) {
+        this.pieceSquare = pieceSquare;
     }
 
 

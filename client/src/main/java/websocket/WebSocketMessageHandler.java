@@ -33,7 +33,7 @@ public class WebSocketMessageHandler {
           break;
         case NOTIFICATION:
         String notification = serverMessage.getMessage();
-        //System.out.println("Notification: " + notification);
+        System.out.println("Notification: " + notification);
 
         if (notification.equalsIgnoreCase("You have resigned.") ||
                 notification.equalsIgnoreCase("Opponent has resigned.") ||
@@ -43,6 +43,11 @@ public class WebSocketMessageHandler {
           Main.shouldTransitionToPostLogin.set(true);
         }
         break;
+        case GAME_OVER:
+          String gameOverMessage = serverMessage.getMessage();
+          displayNotification(gameOverMessage);
+          Main.shouldTransitionToPostLogin.set(true); // Signal the main loop to transition
+          break;
         case ERROR:
           System.out.println("Parsed ServerMessageType: ERROR");
           // Display error message
@@ -55,6 +60,11 @@ public class WebSocketMessageHandler {
       System.err.println("Exception in handleMessage: " + e.getMessage());
       e.printStackTrace();
     }
+  }
+
+  private static void displayNotification(String message) {
+    // Implement UI notification logic
+    System.out.println("Notification: " + message);
   }
 
 }

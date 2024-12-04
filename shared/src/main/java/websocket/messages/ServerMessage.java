@@ -7,12 +7,15 @@ public class ServerMessage {
     private Object game;          // For game data
     private Object data;
 
+    private HighlightData highlightData;
+
 
     public enum ServerMessageType {
         LOAD_GAME,
         ERROR,
         NOTIFICATION,
-        LEGAL_MOVES
+        HIGHLIGHT,
+        GAME_OVER
     }
 
     // Constructor for general messages
@@ -38,6 +41,16 @@ public class ServerMessage {
         this.game = game;
     }
 
+    // Constructor for GAME_OVER messages
+    public ServerMessage(ServerMessageType type, String message, boolean isGameOver) {
+        this.serverMessageType = type;
+        if (type == ServerMessageType.ERROR) {
+            this.errorMessage = message;
+        } else {
+            this.message = message;
+        }
+    }
+
     // Getter methods
     public ServerMessageType getServerMessageType() {
         return this.serverMessageType;
@@ -61,6 +74,12 @@ public class ServerMessage {
     public void setData(Object data) {
         this.data = data;
     }
+
+    public HighlightData getHighlightData() {
+        return this.highlightData;
+    }
+
+
 
     // equals and hashCode methods (omitted for brevity)
 }
