@@ -46,6 +46,8 @@ public class Main {
   private static boolean isLoggedIn = false; // Track whether the user is logged in
   public static boolean isInGame = false; // Tracks if the user is currently in a game
 
+  public static boolean isObserver = false;
+
 
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
@@ -319,6 +321,7 @@ public class Main {
 
     if (response.contains("Successfully joined")) {
       isInGame = true; // Update game state
+      isObserver = false;
       currentGameID = serverFacade.getLastGameID();
 
       // Send CONNECT command via WebSocket
@@ -360,6 +363,8 @@ public class Main {
     // Draw the chessboard only if the game was successfully observed
     if (response.startsWith("Observing game:")) {
       try {
+        isObserver = true;
+        isInGame = true;
         // Fetch the game ID by name
         int gameID = serverFacade.getGameIdByName(gameName);
         if (gameID == -1) {
@@ -535,16 +540,19 @@ public class Main {
   public static void updateGameState(GameStateDTO updatedState) {
     //System.out.println("Updating gameStateDTO with new state.");
     gameStateDTO = updatedState;
-
-    // Update player color based on the updated game state
-    String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
-    if (playerColorStr != null) {
-      isWhitePlayer = "WHITE".equalsIgnoreCase(playerColorStr);
-      System.out.println("Player color set to: " + playerColorStr);
-    } else {
-      System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
-      isWhitePlayer = true; // Default to white if color not found
+    if(!isObserver){String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
+      if (playerColorStr != null) {
+        isWhitePlayer = "WHITE".equalsIgnoreCase(playerColorStr);
+        System.out.println("Player color set to: " + playerColorStr);
+      } else {
+        System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
+        isWhitePlayer = true; // Default to white if color not found
+      }
+    }else{
+      isWhitePlayer=true;
     }
+    // Update player color based on the updated game state
+
     updateChessGameFromGameState(updatedState);
     if (highlightedSquares == null) {
       highlightedSquares = new HashSet<>();
