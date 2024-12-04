@@ -44,14 +44,14 @@ public class WebSocketClient {
    */
   public void connect(String serverUri) throws Exception {
     if (webSocket != null) {
-      System.out.println("WebSocket is already connected.");
+      //System.out.println("WebSocket is already connected.");
       return;
     }
     HttpClient client = HttpClient.newHttpClient();
     webSocket = client.newWebSocketBuilder()
             .buildAsync(URI.create(serverUri), new WebSocketListener())
             .join();
-    System.out.println("Connected to WebSocket server: " + serverUri);
+    //System.out.println("Connected to WebSocket server: " + serverUri);
   }
 
   /**
@@ -62,7 +62,7 @@ public class WebSocketClient {
   public void sendMessage(String message) {
     if (webSocket != null) {
       webSocket.sendText(message, true)
-              .thenRun(() -> System.out.println("Message sent: " + message))
+              .thenRun(() -> System.out.println("Message sent." /*+ message*/))
               .exceptionally(ex -> {
                 System.err.println("Failed to send message: " + ex.getMessage());
                 return null;
@@ -127,18 +127,18 @@ public class WebSocketClient {
 
     @Override
     public void onOpen(WebSocket webSocket) {
-      System.out.println("WebSocket connection opened.");
+      //System.out.println("WebSocket connection opened.");
       WebSocket.Listener.super.onOpen(webSocket);
     }
 
     @Override
     public CompletableFuture<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
       String message = data.toString();
-      System.out.println("Message received: " + message);
+      //System.out.println("Message received: " + message);
 
       // Enqueue the message for processing
       messageQueue.offer(message);
-      System.out.println("Message queued for processing: " + message);
+      //System.out.println("Message queued for processing: " + message);
 
       // Request the next message
       webSocket.request(1);
@@ -149,7 +149,7 @@ public class WebSocketClient {
 
     @Override
     public CompletableFuture<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-      System.out.println("WebSocket connection closed. Code: " + statusCode + ", Reason: " + reason);
+      //System.out.println("WebSocket connection closed. Code: " + statusCode + ", Reason: " + reason);
       webSocket = null;
       return CompletableFuture.completedFuture(null);
     }

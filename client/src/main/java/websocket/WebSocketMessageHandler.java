@@ -14,7 +14,7 @@ public class WebSocketMessageHandler {
    * @param message The JSON message received from the server.
    */
   public static void handleMessage(String message) {
-    System.out.println("Raw Message Received " + message);
+    //System.out.println("Raw Message Received " + message);
 
     try {
       // Parse the message
@@ -23,17 +23,17 @@ public class WebSocketMessageHandler {
       // Handle the message based on its type
       switch (serverMessage.getServerMessageType()) {
         case LOAD_GAME:
-          System.out.println("Parsed ServerMessageType: LOAD_GAME");
+          //System.out.println("Parsed ServerMessageType: LOAD_GAME");
           // Deserialize to GameStateDTO
           GameStateDTO updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameStateDTO.class);
-          System.out.println("Deserialized GameStateDTO: " + gson.toJson(updatedState));
-          System.out.println("Board map in GameStateDTO: " + updatedState.getBoard());
+          //System.out.println("Deserialized GameStateDTO: " + gson.toJson(updatedState));
+          //System.out.println("Board map in GameStateDTO: " + updatedState.getBoard());
 
           Main.updateGameState(updatedState); // Update the game state in Main
           break;
         case NOTIFICATION:
         String notification = serverMessage.getMessage();
-        System.out.println("Notification: " + notification);
+        //System.out.println("Notification: " + notification);
 
         if (notification.equalsIgnoreCase("You have resigned.") ||
                 notification.equalsIgnoreCase("Opponent has resigned.") ||

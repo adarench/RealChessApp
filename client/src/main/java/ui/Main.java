@@ -81,10 +81,10 @@ public class Main {
         try {
           String message = webSocketClient.receiveMessage();
           if (message != null) {
-            System.out.println("Processing message: " + message);
+            //System.out.println("Processing message: " + message);
             WebSocketMessageHandler.handleMessage(message);
           } else {
-            System.out.println("Received null message from receiveMessage()");
+            //System.out.println("Received null message from receiveMessage()");
           }
         } catch (Exception e) {
           System.err.println("Exception in message processing thread: " + e.getMessage());
@@ -447,7 +447,7 @@ public class Main {
 
   private static void gameplayLoop() {
     while (isInGame) {
-      System.out.println("\nEnter a command: makemove, resign, leave, redraw, highlight,clear, help");
+      System.out.println("\nEnter a command: makemove, resign, leave, redraw, highlight, clear, help");
       System.out.print("> ");
       String command = scanner.nextLine().trim().toLowerCase();
 
@@ -533,7 +533,7 @@ public class Main {
 
 
   public static void updateGameState(GameStateDTO updatedState) {
-    System.out.println("Updating gameStateDTO with new state.");
+    //System.out.println("Updating gameStateDTO with new state.");
     gameStateDTO = updatedState;
 
     // Update player color based on the updated game state
@@ -552,7 +552,7 @@ public class Main {
       highlightedSquares.clear(); // Clear existing highlights when game state updates
     }
     drawChessBoard(isWhitePlayer, gameStateDTO, highlightedSquares);
-    System.out.println("gameStateDTO updated: " + new Gson().toJson(gameStateDTO));
+    //System.out.println("gameStateDTO updated: " + new Gson().toJson(gameStateDTO));
   }
 
 
@@ -681,11 +681,7 @@ public class Main {
         if (isEnemyPiece(captureRightKey, playerColor)) {
           legalMoves.add(captureRightKey);
         }
-
-        // TODO: Handle en passant and promotion
         break;
-
-      // TODO: Implement move logic for other piece types (KNIGHT, BISHOP, ROOK, QUEEN, KING)
 
       default:
         System.out.println("Legal move calculation not implemented for piece type: " + pieceType);
