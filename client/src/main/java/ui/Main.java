@@ -985,7 +985,7 @@ public class Main {
 
 
 
-  public static synchronized void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
+  public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
     try {
       Map<String, String> boardMap = gameStateDTO.getBoard();
 
