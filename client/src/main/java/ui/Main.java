@@ -10,6 +10,7 @@ import websocket.commands.UserGameCommand;
 import com.google.gson.Gson;
 import chess.ChessGame;
 import websocket.dto.GameStateDTO;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,20 +38,20 @@ public class Main {
   public static boolean isWhitePlayer = true; // Set this based on the player's role
   private static volatile GameStateDTO gameStateDTO;
 
-
-
-
-
-
   private static ServerFacade serverFacade;
   private static WebSocketClient webSocketClient;
 
 
 
   private static boolean isLoggedIn = false; // Track whether the user is logged in
+  public static boolean isInGame = false; // Tracks if the user is currently in a game
+
+
   private static Scanner scanner = new Scanner(System.in); // Scanner to read user input
 
-  private static int currentGameID = -1; // Track the current game ID
+  public static int currentGameID = -1; // Track the current game ID
+
+  public static AtomicBoolean shouldTransitionToPostLogin = new AtomicBoolean(false);
 
   public static void main(String[] args) {
     String serverUrl = "http://localhost:8080";
@@ -96,6 +97,20 @@ public class Main {
 
 
     showPreloginMenu();
+
+    while (true) {
+      if (shouldTransitionToPostLogin.get()) {
+        shouldTransitionToPostLogin.set(false); // Reset the flag
+        transitionToPostGame();
+      }
+
+      // Sleep briefly to reduce CPU usage
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        // Handle interruption
+      }
+    }
   }
 
   private static GameStateDTO getInitialGameState() {
@@ -257,11 +272,19 @@ public class Main {
     String response = serverFacade.listGames();
     if (response.startsWith("Error:")) {
       System.out.println(response); // Display error
-    } else {
-      System.out.println("Available Games:");
-      System.out.println(response); // Display the list of games
+      return;
+    }
+
+    // Filter out completed games
+    String[] games = response.split("\n");
+    System.out.println("Available Games:");
+    for (String game : games) {
+      if (!game.toLowerCase().contains("(finished)")) {
+        System.out.println(game);
+      }
     }
   }
+
   private static void createGame() {
     System.out.print("Enter a name for the game: ");
     String gameName = scanner.nextLine().trim();
@@ -295,7 +318,7 @@ public class Main {
     System.out.println(response);
 
     if (response.contains("Successfully joined")) {
-      isLoggedIn = true; // Update login status
+      isInGame = true; // Update game state
       currentGameID = serverFacade.getLastGameID();
 
       // Send CONNECT command via WebSocket
@@ -378,7 +401,7 @@ public class Main {
 
 
   private static void showPostloginMenu() {
-    while (true) {
+    while (!isInGame) {
       System.out.println("\n== Chess Client (Postlogin) ==");
       System.out.println("Enter a command: help, listgames, creategame, playgame, observegame, logout");
       System.out.print("> ");
@@ -423,8 +446,8 @@ public class Main {
   }
 
   private static void gameplayLoop() {
-    while (true) {
-      System.out.println("\nEnter a command: makemove, resign, leave, redraw, highlight moves, help");
+    while (isInGame) {
+      System.out.println("\nEnter a command: makemove, resign, leave, redraw, highlight,clear, help");
       System.out.print("> ");
       String command = scanner.nextLine().trim().toLowerCase();
 
@@ -438,8 +461,11 @@ public class Main {
         case "leave":
           leaveGame();
           return; // Exit gameplay loop
-        case "highlight moves":
+        case "highlight":
           highlightLegalMoves();
+          break;
+        case "clear":
+          clearHighlights();
           break;
         case "help":
           showGameplayHelp();
@@ -464,7 +490,7 @@ public class Main {
   }
 
   private static void leaveGame() {
-    if (currentGameID == -1) {
+    if (!isInGame) {
       System.out.println("Error: You are not currently in a game.");
       return;
     }
@@ -477,10 +503,9 @@ public class Main {
     webSocketClient.sendMessage(leaveCommand);
 
     System.out.println("You have left the game.");
-    currentGameID = -1; // Reset current game ID
   }
   private static void resign() {
-    if (currentGameID == -1) {
+    if (!isInGame) {
       System.out.println("Error: You are not currently in a game.");
       return;
     }
@@ -499,6 +524,13 @@ public class Main {
     return highlightedSquares;
   }
 
+  public static void transitionToPostGame() {
+    System.out.println("\nReturning to the main menu.\n");
+    // Display post-login menu
+    showPostloginMenu();
+  }
+
+
 
   public static void updateGameState(GameStateDTO updatedState) {
     System.out.println("Updating gameStateDTO with new state.");
@@ -514,6 +546,12 @@ public class Main {
       isWhitePlayer = true; // Default to white if color not found
     }
     updateChessGameFromGameState(updatedState);
+    if (highlightedSquares == null) {
+      highlightedSquares = new HashSet<>();
+    } else {
+      highlightedSquares.clear(); // Clear existing highlights when game state updates
+    }
+    drawChessBoard(isWhitePlayer, gameStateDTO, highlightedSquares);
     System.out.println("gameStateDTO updated: " + new Gson().toJson(gameStateDTO));
   }
 
@@ -803,6 +841,9 @@ public class Main {
     System.out.println("  makemove - Make a chess move (e.g., e2e4)");
     System.out.println("  resign   - Resign from the game");
     System.out.println("  leave    - Leave the game without resigning");
+    System.out.println("  highlight - Highlight legal moves for a selected piece");
+    System.out.println("  clear     - Clear all highlighted squares");
+    System.out.println("  redraw    - Redraw the chessboard");
     System.out.println("  help     - Display available in-game commands");
   }
 
@@ -944,7 +985,7 @@ public class Main {
 
 
 
-  public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
+  public static synchronized void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
     try {
       Map<String, String> boardMap = gameStateDTO.getBoard();
 
@@ -976,20 +1017,22 @@ public class Main {
                   getSquareKey(8 - row, col + 1) :
                   getSquareKey(row + 1, col + 1); // Adjust based on player color
 
+          boolean isLightSquare = (row + col) % 2 == 0;
+
           String squareColor;
           if (highlightedSquares.contains(squareKey)) {
             squareColor = ANSI_HIGHLIGHT_SQUARE; // Highlight color
           } else {
-            squareColor = ((row + col) % 2 == 0) ? ANSI_LIGHT_SQUARE : ANSI_DARK_SQUARE;
+            squareColor = isLightSquare ? ANSI_LIGHT_SQUARE : ANSI_DARK_SQUARE;
           }
 
-          // Determine piece color
+          // Determine piece color based on square background and piece ownership
           String pieceColor = "";
           if (piece != null) {
             if (isWhitePiece(piece)) {
-              pieceColor = ANSI_WHITE_PIECE;
+              pieceColor = isLightSquare ? ANSI_BLACK_PIECE : ANSI_WHITE_PIECE;
             } else {
-              pieceColor = ANSI_BLACK_PIECE;
+              pieceColor = isLightSquare ? ANSI_BLACK_PIECE : ANSI_WHITE_PIECE;
             }
           }
 
@@ -1016,6 +1059,7 @@ public class Main {
       e.printStackTrace();
     }
   }
+
 
 
   private static String getSquareKey(int row, int col) {

@@ -1,5 +1,6 @@
 package websocket;
 
+import chess.ChessGame;
 import websocket.dto.GameStateDTO;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
@@ -29,12 +30,19 @@ public class WebSocketMessageHandler {
           System.out.println("Board map in GameStateDTO: " + updatedState.getBoard());
 
           Main.updateGameState(updatedState); // Update the game state in Main
-          Main.drawChessBoard(Main.isWhitePlayer, updatedState, Main.getHighlightedSquares());
           break;
         case NOTIFICATION:
-          // Display notification
-          System.out.println("Notification: " + serverMessage.getMessage());
-          break;
+        String notification = serverMessage.getMessage();
+        System.out.println("Notification: " + notification);
+
+        if (notification.equalsIgnoreCase("You have resigned.") ||
+                notification.equalsIgnoreCase("Opponent has resigned.") ||
+                notification.equalsIgnoreCase("Checkmate.")) {
+                Main.isInGame = false;
+                Main.currentGameID = -1;
+          Main.shouldTransitionToPostLogin.set(true);
+        }
+        break;
         case ERROR:
           System.out.println("Parsed ServerMessageType: ERROR");
           // Display error message
