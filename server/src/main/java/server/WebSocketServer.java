@@ -98,21 +98,8 @@ public class WebSocketServer {
     authTokenToSession.put(authToken, session);
   }
 
-  public void removeAuthTokenSessionMapping(String authToken) {
-    Session session = authTokenToSession.remove(authToken);
-    if (session != null) {
-      sessionToAuthToken.remove(session);
-    }
-  }
   public Session getSessionByAuthToken(String authToken) {
     return authTokenToSession.get(authToken);
-  }
-
-  public void sendMessageToAuthToken(String authToken, String message) {
-    Session session = authTokenToSession.get(authToken);
-    if (session != null && session.isOpen()) {
-      sendMessage(session, message);
-    }
   }
 
 

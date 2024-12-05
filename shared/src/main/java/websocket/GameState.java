@@ -54,13 +54,6 @@ public class GameState {
   }
 
 
-  public Set<String> getAllParticipants() {
-    Set<String> participants = new HashSet<>(players.keySet());
-    participants.addAll(observers);
-    return participants;
-  }
-
-
   public synchronized boolean markResigned(String authToken) {
     if (!players.containsKey(authToken)) {
       return false; // Player not part of the game
@@ -111,10 +104,6 @@ public class GameState {
     return observers.remove(authToken);
   }
 
-  public ChessGame getChessGame() {
-    return chessGame;
-  }
-
   public int getGameID() {
     return gameID;
   }
@@ -125,10 +114,6 @@ public class GameState {
 
   public Set<String> getObservers() {
     return observers;
-  }
-
-  public ChessGame.TeamColor getPlayerColor(String authToken) {
-    return playerColors.get(authToken);
   }
 
 

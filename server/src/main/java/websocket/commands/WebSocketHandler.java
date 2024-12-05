@@ -1,6 +1,5 @@
 package websocket.commands;
 
-import chess.InvalidMoveException;
 import org.eclipse.jetty.websocket.api.Session;
 import server.WebSocketServer;
 import websocket.GameState;
@@ -26,8 +25,8 @@ import model.GameData;
 import chess.ChessMove;
 
 public class WebSocketHandler {
-  private Gson gson = new Gson();
-  private static final Map<Integer, GameState> gameStates = new ConcurrentHashMap<>(); // gameID -> GameState
+  private Gson GSON= new Gson();
+  private static final Map<Integer, GameState> GAME_STATES= new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
 
@@ -95,8 +94,8 @@ public class WebSocketHandler {
       return new ServerMessage(ServerMessageType.ERROR, "Server error during game retrieval");
     }
 
-    gameStates.computeIfAbsent(gameID, id -> new GameState(id));
-    GameState gameState = gameStates.get(gameID);
+    GAME_STATES.computeIfAbsent(gameID, id -> new GameState(id));
+    GameState gameState = GAME_STATES.get(gameID);
     System.out.println("Initialized GameState for gameID: " + gameID);
     // Determine the player's team color based on GameData
     ChessGame.TeamColor teamColor = null;
@@ -140,8 +139,6 @@ public class WebSocketHandler {
 
     return loadGameMessage;
   }
-
-
   private ServerMessage handleLeave(UserGameCommand command) {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
@@ -160,11 +157,11 @@ public class WebSocketHandler {
     }
 
     // Check if the game exists
-    if (!gameStates.containsKey(gameID)) {
+    if (!GAME_STATES.containsKey(gameID)) {
       return new ServerMessage(ServerMessageType.ERROR, "Game not found");
     }
 
-    GameState gameState = gameStates.get(gameID);
+    GameState gameState = GAME_STATES.get(gameID);
 
     // Remove the user from the game
     boolean removed = gameState.removePlayer(authToken) || gameState.removeObserver(authToken);
@@ -193,7 +190,7 @@ public class WebSocketHandler {
 
       // If no players are left, remove the GameState
       if (gameState.getPlayers().isEmpty()) {
-        gameStates.remove(gameID);
+        GAME_STATES.remove(gameID);
       }
 
       // Notify others in the game
@@ -224,11 +221,11 @@ public class WebSocketHandler {
     }
 
     // Check if the game exists
-    if (!gameStates.containsKey(gameID)) {
+    if (!GAME_STATES.containsKey(gameID)) {
       return new ServerMessage(ServerMessageType.ERROR, "Game not found");
     }
 
-    GameState gameState = gameStates.get(gameID);
+    GameState gameState = GAME_STATES.get(gameID);
 
     // Check if the game is already over
     if (gameState.isGameOver()) {
@@ -254,7 +251,7 @@ public class WebSocketHandler {
   }
 
   public void removeUserFromAllGames(String authToken) {
-    gameStates.values().forEach(gameState -> {
+    GAME_STATES.values().forEach(gameState -> {
       gameState.removePlayer(authToken);
       gameState.removeObserver(authToken);
     });
@@ -262,7 +259,7 @@ public class WebSocketHandler {
   }
 
   public Set<String> getRecipientsForGame(int gameID) {
-    GameState gameState = gameStates.get(gameID);
+    GameState gameState = GAME_STATES.get(gameID);
     if (gameState == null) {
       return Collections.emptySet();
     }
@@ -299,7 +296,7 @@ public class WebSocketHandler {
       return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
     }
 
-    GameState gameState = gameStates.get(gameID);
+    GameState gameState = GAME_STATES.get(gameID);
     if (gameState == null) {
       return new ServerMessage(ServerMessageType.ERROR, "Game not found");
     }
@@ -314,7 +311,7 @@ public class WebSocketHandler {
       ServerMessage errorMessage = new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
       Session recipientSession = server.getSessionByAuthToken(authToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, gson.toJson(errorMessage));
+        server.sendMessage(recipientSession, GSON.toJson(errorMessage));
       }
       return null; // We've already sent the error message
     }
@@ -323,7 +320,7 @@ public class WebSocketHandler {
     GameStateDTO dto = gameState.toDTO();
 
     // Serialize and log the DTO for debugging
-    String serializedDTO = gson.toJson(dto);
+    String serializedDTO = GSON.toJson(dto);
     System.out.println("Serialized GameStateDTO: " + serializedDTO);
 
     // Create a ServerMessage with LOAD_GAME type
@@ -339,7 +336,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : recipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
+        server.sendMessage(recipientSession, GSON.toJson(gameStateMessage));
         System.out.println("Sent LOAD_GAME to session: " + recipientSession);
       }
     }
@@ -356,7 +353,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : notificationRecipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, gson.toJson(notificationMessage));
+        server.sendMessage(recipientSession, GSON.toJson(notificationMessage));
         System.out.println("Sent NOTIFICATION to authToken: " + recipientAuthToken);
       }
     }
@@ -368,7 +365,7 @@ public class WebSocketHandler {
       for (String recipientAuthToken : recipients) {
         Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
         if (recipientSession != null && recipientSession.isOpen()) {
-          server.sendMessage(recipientSession, gson.toJson(gameOverMessage));
+          server.sendMessage(recipientSession, GSON.toJson(gameOverMessage));
           System.out.println("Sent GAME_OVER to authToken: " + recipientAuthToken);
         }
       }

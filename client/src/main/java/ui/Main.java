@@ -116,56 +116,6 @@ public class Main {
     }
   }
 
-  private static GameStateDTO getInitialGameState() {
-    // Initialize a new game state
-    GameStateDTO initialState = new GameStateDTO();
-
-    // Example: Setting up pieces in their starting positions
-    Map<String, String> board = initialState.getBoard();
-
-    // Initialize White pieces
-    board.put("a1", "♖"); // Rook
-    board.put("b1", "♘"); // Knight
-    board.put("c1", "♗"); // Bishop
-    board.put("d1", "♕"); // Queen
-    board.put("e1", "♔"); // King
-    board.put("f1", "♗"); // Bishop
-    board.put("g1", "♘"); // Knight
-    board.put("h1", "♖"); // Rook
-    for (char file = 'a'; file <= 'h'; file++) {
-      String position = "" + file + "2";
-      board.put(position, "♙"); // Pawns
-    }
-
-    // Initialize Black pieces
-    board.put("a8", "♜"); // Rook
-    board.put("b8", "♞"); // Knight
-    board.put("c8", "♝"); // Bishop
-    board.put("d8", "♛"); // Queen
-    board.put("e8", "♚"); // King
-    board.put("f8", "♝"); // Bishop
-    board.put("g8", "♞"); // Knight
-    board.put("h8", "♜"); // Rook
-    for (char file = 'a'; file <= 'h'; file++) {
-      String position = "" + file + "7";
-      board.put(position, "♟"); // Pawns
-    }
-
-    // Set player colors (replace with actual auth tokens)
-    Map<String, String> playerColors = initialState.getPlayerColors();
-    playerColors.put("your-auth-token", "WHITE");
-    playerColors.put("opponent-auth-token", "BLACK");
-
-    // Initialize other game state parameters as needed
-    initialState.setGameOver(false);
-
-    return initialState;
-  }
-
-
-
-
-
   private static void showPreloginMenu() {
     while (true) {
       System.out.println("\n== Chess Client ==");
@@ -668,54 +618,6 @@ public class Main {
     return square.matches("^[a-h][1-8]$");
   }
 
-  private static Set<String> calculateLegalMoves(String square, String piece) {
-    Set<String> legalMoves = new HashSet<>();
-
-    ChessPosition pos = parsePosition(square);
-    ChessPiece.PieceType pieceType = getPieceType(piece);
-    ChessGame.TeamColor playerColor = isWhitePlayer ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
-
-    switch (pieceType) {
-      case PAWN:
-        int direction = playerColor == ChessGame.TeamColor.WHITE ? 1 : -1;
-        int startRow = playerColor == ChessGame.TeamColor.WHITE ? 2 : 7;
-
-        // One square forward
-        ChessPosition oneForward = new ChessPosition(pos.getRow() + direction, pos.getColumn());
-        String oneForwardKey = positionToKey(oneForward);
-        if (isSquareEmpty(oneForwardKey)) {
-          legalMoves.add(oneForwardKey);
-
-          // Two squares forward from starting position
-          ChessPosition twoForward = new ChessPosition(pos.getRow() + 2 * direction, pos.getColumn());
-          String twoForwardKey = positionToKey(twoForward);
-          if (pos.getRow() == startRow && isSquareEmpty(twoForwardKey)) {
-            legalMoves.add(twoForwardKey);
-          }
-        }
-
-        // Capture moves (diagonals)
-        ChessPosition captureLeft = new ChessPosition(pos.getRow() + direction, pos.getColumn() - 1);
-        String captureLeftKey = positionToKey(captureLeft);
-        if (isEnemyPiece(captureLeftKey, playerColor)) {
-          legalMoves.add(captureLeftKey);
-        }
-
-        ChessPosition captureRight = new ChessPosition(pos.getRow() + direction, pos.getColumn() + 1);
-        String captureRightKey = positionToKey(captureRight);
-        if (isEnemyPiece(captureRightKey, playerColor)) {
-          legalMoves.add(captureRightKey);
-        }
-        break;
-
-      default:
-        System.out.println("Legal move calculation not implemented for piece type: " + pieceType);
-        break;
-    }
-
-    return legalMoves;
-  }
-
 
   private static void highlightLegalMoves() {
     System.out.print("Enter the square of the piece to highlight (e.g., e2): ");
@@ -911,18 +813,7 @@ public class Main {
     }
   }
   private static boolean isValidMoveFormat(String move) {return move.matches("^[a-h][1-8][a-h][1-8][QRBN]?$");}
-  private static GameState fetchGameStateFromServer(int gameID) {
-    // Logic to retrieve the game state (via WebSocket or HTTP)
-    return null; // Replace with actual implementation
-  }
-  private static ChessPiece.PieceType mapPromotionPiece(char promotionChar) {
-    switch (Character.toLowerCase(promotionChar)) {
-      case 'q': return ChessPiece.PieceType.QUEEN;
-      case 'r': return ChessPiece.PieceType.ROOK;
-      case 'b': return ChessPiece.PieceType.BISHOP;
-      case 'n': return ChessPiece.PieceType.KNIGHT;
-      default: return null; // Invalid promotion piece
-    }}
+
   public static ChessMove parseMove(String input) {
     // Parse start and end positions
     int startCol = input.charAt(0) - 'a' + 1;
@@ -945,19 +836,6 @@ public class Main {
 
     int colIndex = column - 'a' + 1; // Convert 'a' to 1, 'b' to 2, etc.
     return new ChessPosition(row, colIndex);
-  }
-  private static String getColoredPiece(String piece) {
-    if (piece == null || piece.trim().isEmpty()) {
-      return " "; // Empty square
-    }
-
-    // Determine if the piece is white or black
-    boolean isWhitePiece = Character.isUpperCase(piece.charAt(0));
-
-    String pieceColor = isWhitePiece ? ANSI_WHITE_PIECE : ANSI_BLACK_PIECE;
-
-    // Return the colored piece symbol
-    return pieceColor + piece + ANSI_RESET;
   }
 
   public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
@@ -1002,8 +880,7 @@ public class Main {
           }
 
           // Determine piece color based on square background and piece ownership
-          String pieceColor = "";
-          if (piece != null) {
+          String pieceColor = ""; if (piece != null) {
             if (isWhitePiece(piece)) {
               pieceColor = isLightSquare ? ANSI_BLACK_PIECE : ANSI_WHITE_PIECE;
             } else {
