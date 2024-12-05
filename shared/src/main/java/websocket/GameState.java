@@ -164,6 +164,7 @@ public class GameState {
       ChessGame.TeamColor opponentColor = chessGame.getOpponentColor(playerColor);
       if (chessGame.isInCheckmate(opponentColor)) {
         gameOver = true;
+        winnerAuthToken = getOpponentAuthToken(authToken);
         return new MoveResult(true, "Move successful. Checkmate!");
       } else if (chessGame.isInStalemate(opponentColor)) {
         gameOver = true;
@@ -224,6 +225,12 @@ public class GameState {
 
     dto.setObservers(this.observers);
     dto.setGameOver(this.gameOver);
+
+    // Add winner information if the game is over
+    if (this.gameOver && this.winnerAuthToken != null) {
+      String winnerUsername = this.players.get(this.winnerAuthToken);
+      dto.setWinner(winnerUsername); // Ensure GameStateDTO has a 'winner' field
+    }
 
     // Serialize the chessboard consistently from White's perspective
     Map<String, String> boardMap = new HashMap<>();

@@ -11,7 +11,8 @@ public class GameStateDTO {
   private Map<String, String> playerColors; // authToken -> TeamColor as String
   private Set<String> observers;
   private boolean gameOver;
-  private Map<String, String> board; // e.g., "e2" -> "Pawn"
+  private Map<String, String> board;
+  private String winner;
 
   // Constructors
   public GameStateDTO() {}
@@ -64,6 +65,18 @@ public class GameStateDTO {
   public void setBoard(Map<String, String> board) {
     this.board = board;
   }
+
+  // Inside GameStateDTO.java
+
+
+  public String getWinner() {
+    return winner;
+  }
+
+  public void setWinner(String winner) {
+    this.winner = winner;
+  }
+
 
   @Override
   public String toString() {

@@ -361,6 +361,19 @@ public class WebSocketHandler {
       }
     }
 
+    // If the game is over, send a GAME_OVER message
+    if (gameState.isGameOver()) {
+      String winnerUsername = gameState.getWinnerUsername();
+      ServerMessage gameOverMessage = new ServerMessage(ServerMessageType.GAME_OVER, "Checkmate. " + winnerUsername + " wins!");
+      for (String recipientAuthToken : recipients) {
+        Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
+        if (recipientSession != null && recipientSession.isOpen()) {
+          server.sendMessage(recipientSession, gson.toJson(gameOverMessage));
+          System.out.println("Sent GAME_OVER to authToken: " + recipientAuthToken);
+        }
+      }
+    }
+
     System.out.println("MAKE_MOVE successful for gameID: " + gameID + ", move: " + move);
 
     // Return null since we've already sent the necessary messages
