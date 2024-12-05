@@ -725,50 +725,6 @@ public class Main {
       System.out.println("Game state is not available.");
     }
   }
-
-  private static String positionToKey(ChessPosition pos) {
-    char col = (char) ('a' + pos.getColumn() - 1);
-    return "" + col + pos.getRow();
-  }
-
-  private static boolean isSquareEmpty(String squareKey) {
-    return !gameStateDTO.getBoard().containsKey(squareKey);
-  }
-
-  private static boolean isEnemyPiece(String squareKey, ChessGame.TeamColor playerColor) {
-    if (!gameStateDTO.getBoard().containsKey(squareKey)) {
-      return false;
-    }
-    String piece = gameStateDTO.getBoard().get(squareKey);
-    boolean isWhitePiece = Character.isUpperCase(piece.charAt(0));
-    return (playerColor == ChessGame.TeamColor.WHITE && !isWhitePiece) ||
-            (playerColor == ChessGame.TeamColor.BLACK && isWhitePiece);
-  }
-
-
-  public static boolean isWhitePlayer() {
-    if (gameStateDTO == null) {
-      System.err.println("GameStateDTO is null. Cannot determine player color.");
-      return true; // Default orientation
-    }
-    try {
-      String playerColorStr = gameStateDTO.getPlayerColors().get(serverFacade.getAuthToken());
-      if (playerColorStr == null) {
-        System.err.println("Player color not found for authToken: " + serverFacade.getAuthToken());
-        return true; // Default orientation
-      }
-      ChessGame.TeamColor playerColor = ChessGame.TeamColor.valueOf(playerColorStr);
-      return playerColor == ChessGame.TeamColor.WHITE;
-    } catch (Exception e) {
-      System.err.println("Exception in isWhitePlayer: " + e.getMessage());
-      e.printStackTrace();
-      return true; // Default orientation
-    }
-  }
-
-
-
-
   private static void showGameplayHelp() {
     System.out.println("In-Game Commands:");
     System.out.println("  makemove - Make a chess move (e.g., e2e4)");
@@ -830,13 +786,6 @@ public class Main {
     return new ChessMove(startPos, endPos, null);
   }
 
-  private static ChessPosition parsePosition(String pos) {
-    char column = pos.charAt(0); // e.g., 'e'
-    int row = Character.getNumericValue(pos.charAt(1)); // e.g., 2
-
-    int colIndex = column - 'a' + 1; // Convert 'a' to 1, 'b' to 2, etc.
-    return new ChessPosition(row, colIndex);
-  }
 
   public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
     try {

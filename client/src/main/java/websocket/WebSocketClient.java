@@ -90,19 +90,6 @@ public class WebSocketClient {
   /**
    * Disconnects from the WebSocket server.
    */
-  public void disconnect() {
-    if (webSocket != null) {
-      webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Goodbye!")
-              .thenRun(() -> System.out.println("WebSocket connection closed."))
-              .exceptionally(ex -> {
-                System.err.println("Failed to close WebSocket: " + ex.getMessage());
-                return null;
-              });
-      webSocket = null;
-    } else {
-      System.err.println("WebSocket is not connected.");
-    }
-  }
 
   /**
    * Sends a MAKE_MOVE command via WebSocket.

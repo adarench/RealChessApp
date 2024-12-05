@@ -20,11 +20,6 @@ public class ServerMessage {
 
     // Constructor for general messages
 
-    public void validateServerMessage(ServerMessageType type, Object data) {
-        this.serverMessageType = type;
-        this.data = data;
-    }
-
     // Constructor with message content
     public ServerMessage(ServerMessageType type, String message) {
         this.serverMessageType = type;
