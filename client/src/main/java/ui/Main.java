@@ -599,8 +599,6 @@ public class Main {
 
     chessGame.setBoard(chessBoard);
 
-    // Set current turn based on the game state
-    // Assuming WHITE always starts and turns alternate
     // You might need to adjust this based on your server's game state
     int totalMoves = gameStateDTO.getPlayers().size(); // Simplistic assumption
     chessGame.setTeamTurn(totalMoves % 2 == 0 ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK);
@@ -792,72 +790,6 @@ public class Main {
   }
 
 
-
-
-
-
-  /*private static void highlightLegalMoves() {
-    System.out.print("Enter the square of the piece to highlight (e.g., e2): ");
-    String input = scanner.nextLine().trim().toLowerCase();
-
-    // Validate input format
-    if (!isValidSquareFormat(input)) {
-      System.out.println("Error: Invalid square format. Please enter a valid square (e.g., e2).");
-      return;
-    }
-
-    // Check if the selected square has a piece
-    if (!gameStateDTO.getBoard().containsKey(input)) {
-      System.out.println("Error: No piece found at " + input + ".");
-      return;
-    }
-
-    // Check if the piece belongs to the current player
-    String authToken = serverFacade.getAuthToken();
-    String playerColor = gameStateDTO.getPlayerColors().get(authToken);
-    if (playerColor == null) {
-      System.out.println("Error: Unable to determine your player color.");
-      return;
-    }
-
-    String pieceSymbol = gameStateDTO.getBoard().get(input);
-    boolean isWhitePiece = isWhitePiece(pieceSymbol);
-    String pieceColor = isWhitePiece ? "WHITE" : "BLACK";
-
-    if (!playerColor.equals(pieceColor)) {
-      System.out.println("Error: You can only highlight your own pieces.");
-      return;
-    }
-
-    // Convert input to ChessPosition
-    ChessPosition selectedPosition = convertSquareToChessPosition(input);
-
-    // Get legal moves from ChessGame
-    Collection<ChessMove> legalMovesCollection = chessGame.validMoves(selectedPosition);
-
-    if (legalMovesCollection == null || legalMovesCollection.isEmpty()) {
-      System.out.println("No legal moves available for the selected piece.");
-      return;
-    }
-
-    // Convert ChessMove to square keys
-    Set<String> legalMoveSquares = new HashSet<>();
-    for (ChessMove move : legalMovesCollection) {
-      String toSquare = move.getEndPosition().toString(); // e.g., "e4"
-      legalMoveSquares.add(toSquare);
-    }
-
-    // Update highlightedSquares
-    highlightedSquares.clear();
-    highlightedSquares.add(input); // Highlight selected square
-    highlightedSquares.addAll(legalMoveSquares); // Highlight legal move squares
-
-    // Redraw the board with highlights
-    drawChessBoard(isWhitePlayer, gameStateDTO, highlightedSquares);
-    System.out.println("Legal moves for " + input + " have been highlighted.");
-  }*/
-
-
   private static ChessPiece.PieceType getPieceType(String piece) {
     switch (piece.toUpperCase()) {
       case "♙":
@@ -1007,11 +939,6 @@ public class Main {
     return new ChessMove(startPos, endPos, null);
   }
 
-
-
-
-
-
   private static ChessPosition parsePosition(String pos) {
     char column = pos.charAt(0); // e.g., 'e'
     int row = Character.getNumericValue(pos.charAt(1)); // e.g., 2
@@ -1032,57 +959,6 @@ public class Main {
     // Return the colored piece symbol
     return pieceColor + piece + ANSI_RESET;
   }
-
-
-
-  /*public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO) {
-    String[][] boardArray = new String[8][8];
-
-    // Initialize the boardArray with empty spaces
-    for (int i = 0; i < 8; i++) {
-      Arrays.fill(boardArray[i], " ");
-    }
-
-    // Populate the boardArray with pieces from the gameStateDTO's board map
-    Map<String, String> boardMap = gameStateDTO.getBoard();
-    for (Map.Entry<String, String> entry : boardMap.entrySet()) {
-      String position = entry.getKey();
-      String piece = entry.getValue();
-
-      int file = position.charAt(0) - 'a';                      // 'a' to 'h' mapped to 0 to 7
-      int rank = Character.getNumericValue(position.charAt(1)); // '1' to '8' mapped to 1 to 8
-
-      int arrayRow = 8 - rank; // Adjust rank to array index (0 to 7)
-      int arrayCol = file;     // File is already 0 to 7
-
-      boardArray[arrayRow][arrayCol] = piece;
-    }
-
-    // Flip the board for black's perspective if needed
-    if (!isWhitePlayer) {
-      // Reverse the rows
-      for (int i = 0; i < 4; i++) {
-        String[] temp = boardArray[i];
-        boardArray[i] = boardArray[7 - i];
-        boardArray[7 - i] = temp;
-      }
-      // Reverse each row
-      for (int i = 0; i < 8; i++) {
-        Collections.reverse(Arrays.asList(boardArray[i]));
-      }
-    }
-
-    // Print the boardArray
-    for (int i = 0; i < 8; i++) {
-      for (int j = 0; j < 8; j++) {
-        System.out.print(boardArray[i][j] + " ");
-      }
-      System.out.println(" " + (8 - i)); // Print rank numbers
-    }
-    System.out.println("a b c d e f g h");
-  }*/
-
-
 
   public static void drawChessBoard(boolean isWhitePlayer, GameStateDTO gameStateDTO, Set<String> highlightedSquares) {
     try {
@@ -1149,7 +1025,7 @@ public class Main {
       // Print column labels
       System.out.print("  "); // Space before column labels
       for (int col = 0; col < 8; col++) {
-        char colLabel = (char) ('a' + col);
+        char colLabel = isWhitePlayer ? (char) ('a' + col) : (char) ('h' - col);
         System.out.print(" " + colLabel + " ");
       }
       System.out.println(); // Move to the next line after column labels
