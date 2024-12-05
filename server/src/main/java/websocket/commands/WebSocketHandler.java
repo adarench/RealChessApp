@@ -363,8 +363,8 @@ public class WebSocketHandler {
 
     // If the game is over, send a GAME_OVER message
     if (gameState.isGameOver()) {
+      ServerMessage gameOverMessage = new ServerMessage(ServerMessageType.GAME_OVER, "Checkmate. ");
       String winnerUsername = gameState.getWinnerUsername();
-      ServerMessage gameOverMessage = new ServerMessage(ServerMessageType.GAME_OVER, "Checkmate. " + winnerUsername + " wins!");
       for (String recipientAuthToken : recipients) {
         Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
         if (recipientSession != null && recipientSession.isOpen()) {

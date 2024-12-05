@@ -163,6 +163,7 @@ public class GameState {
       // Check for game-ending conditions
       ChessGame.TeamColor opponentColor = chessGame.getOpponentColor(playerColor);
       if (chessGame.isInCheckmate(opponentColor)) {
+        System.out.println("Checkmate detected! Opponent: " + opponentColor);
         gameOver = true;
         winnerAuthToken = getOpponentAuthToken(authToken);
         return new MoveResult(true, "Move successful. Checkmate!");
