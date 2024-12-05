@@ -1,12 +1,11 @@
 package websocket;
 
-import chess.ChessGame;
 import websocket.dto.GameStateDTO;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
 import ui.Main;
 public class WebSocketMessageHandler {
-  private static final Gson gson = new Gson();
+  private static final Gson GSON= new Gson();
 
   /**
    * Handles incoming messages from the WebSocket.
@@ -18,14 +17,14 @@ public class WebSocketMessageHandler {
 
     try {
       // Parse the message
-      ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+      ServerMessage serverMessage = GSON.fromJson(message, ServerMessage.class);
 
       // Handle the message based on its type
       switch (serverMessage.getServerMessageType()) {
         case LOAD_GAME:
           //System.out.println("Parsed ServerMessageType: LOAD_GAME");
           // Deserialize to GameStateDTO
-          GameStateDTO updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameStateDTO.class);
+          GameStateDTO updatedState = GSON.fromJson(GSON.toJson(serverMessage.getGame()), GameStateDTO.class);
           //System.out.println("Deserialized GameStateDTO: " + gson.toJson(updatedState));
           //System.out.println("Board map in GameStateDTO: " + updatedState.getBoard());
 

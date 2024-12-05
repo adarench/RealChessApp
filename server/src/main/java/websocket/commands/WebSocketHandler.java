@@ -25,7 +25,7 @@ import model.GameData;
 import chess.ChessMove;
 
 public class WebSocketHandler {
-  private Gson GSON= new Gson();
+  private static  Gson GSON= new Gson();
   private static final Map<Integer, GameState> GAME_STATES= new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
