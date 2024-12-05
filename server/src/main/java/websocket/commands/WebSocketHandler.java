@@ -25,7 +25,7 @@ import model.GameData;
 import chess.ChessMove;
 
 public class WebSocketHandler {
-  private static  Gson GSON= new Gson();
+  private static  Gson gSon= new Gson();
   private static final Map<Integer, GameState> GAME_STATES= new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
@@ -311,7 +311,7 @@ public class WebSocketHandler {
       ServerMessage errorMessage = new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
       Session recipientSession = server.getSessionByAuthToken(authToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, GSON.toJson(errorMessage));
+        server.sendMessage(recipientSession, gSon.toJson(errorMessage));
       }
       return null; // We've already sent the error message
     }
@@ -320,7 +320,7 @@ public class WebSocketHandler {
     GameStateDTO dto = gameState.toDTO();
 
     // Serialize and log the DTO for debugging
-    String serializedDTO = GSON.toJson(dto);
+    String serializedDTO = gSon.toJson(dto);
     System.out.println("Serialized GameStateDTO: " + serializedDTO);
 
     // Create a ServerMessage with LOAD_GAME type
@@ -336,7 +336,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : recipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, GSON.toJson(gameStateMessage));
+        server.sendMessage(recipientSession, gSon.toJson(gameStateMessage));
         System.out.println("Sent LOAD_GAME to session: " + recipientSession);
       }
     }
@@ -353,7 +353,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : notificationRecipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, GSON.toJson(notificationMessage));
+        server.sendMessage(recipientSession, gSon.toJson(notificationMessage));
         System.out.println("Sent NOTIFICATION to authToken: " + recipientAuthToken);
       }
     }
@@ -365,7 +365,7 @@ public class WebSocketHandler {
       for (String recipientAuthToken : recipients) {
         Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
         if (recipientSession != null && recipientSession.isOpen()) {
-          server.sendMessage(recipientSession, GSON.toJson(gameOverMessage));
+          server.sendMessage(recipientSession, gSon.toJson(gameOverMessage));
           System.out.println("Sent GAME_OVER to authToken: " + recipientAuthToken);
         }
       }
