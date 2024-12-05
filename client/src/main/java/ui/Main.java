@@ -86,10 +86,6 @@ public class Main {
           if (message != null) {
             //System.out.println("Processing message: " + message);
             WebSocketMessageHandler.handleMessage(message);
-            if (message.contains("\"event\": \"GAME_OVER\"") ||
-                    message.contains("\"event\": \"LEAVE\"")) {
-              shouldTransitionToPostLogin.set(true);
-            }
           } else {
             //System.out.println("Received null message from receiveMessage()");
           }
@@ -542,6 +538,7 @@ public class Main {
     webSocketClient.sendMessage(resignCommand);
 
     System.out.println("You have resigned from the game.");
+    isInGame = false;
     currentGameID = -1; // Reset current game ID
   }
   public static synchronized Set<String> getHighlightedSquares() {
@@ -549,10 +546,12 @@ public class Main {
   }
 
   public static void transitionToPostGame() {
+    System.out.println("\n=== Game Over ===");
     System.out.println("\nReturning to the main menu.\n");
     // Display post-login menu
     showPostloginMenu();
     isInGame = false;
+    currentGameID = -1;
   }
 
 

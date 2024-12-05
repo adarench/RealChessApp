@@ -45,7 +45,10 @@ public class WebSocketMessageHandler {
         break;
         case GAME_OVER:
           String gameOverMessage = serverMessage.getMessage();
+          notifyUser("Game Over: " + gameOverMessage);
           displayNotification(gameOverMessage);
+          Main.isInGame = false;
+          Main.currentGameID = -1;
           Main.shouldTransitionToPostLogin.set(true); // Signal the main loop to transition
           break;
         case ERROR:
@@ -60,6 +63,12 @@ public class WebSocketMessageHandler {
       System.err.println("Exception in handleMessage: " + e.getMessage());
       e.printStackTrace();
     }
+  }
+
+  private static void notifyUser(String message) {
+    System.out.println("\n=== Notification ===");
+    System.out.println(message);
+    System.out.println("====================\n");
   }
 
   private static void displayNotification(String message) {
