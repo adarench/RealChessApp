@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 import chess.ChessBoard;
 import java.util.Collection;
+import java.io.IOException;
 
 
 
@@ -85,6 +86,10 @@ public class Main {
           if (message != null) {
             //System.out.println("Processing message: " + message);
             WebSocketMessageHandler.handleMessage(message);
+            if (message.contains("\"event\": \"GAME_OVER\"") ||
+                    message.contains("\"event\": \"LEAVE\"")) {
+              shouldTransitionToPostLogin.set(true);
+            }
           } else {
             //System.out.println("Received null message from receiveMessage()");
           }
@@ -519,8 +524,9 @@ public class Main {
             serverFacade.getAuthToken(), currentGameID
     );
     webSocketClient.sendMessage(leaveCommand);
-
     System.out.println("You have left the game.");
+    shouldTransitionToPostLogin.set(true); // Set the flag to transition
+    isInGame = false; // Update game state
   }
   private static void resign() {
     if (!isInGame) {
@@ -546,6 +552,7 @@ public class Main {
     System.out.println("\nReturning to the main menu.\n");
     // Display post-login menu
     showPostloginMenu();
+    isInGame = false;
   }
 
 
