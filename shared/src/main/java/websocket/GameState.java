@@ -54,6 +54,13 @@ public class GameState {
   }
 
 
+  public Set<String> getAllParticipants() {
+    Set<String> participants = new HashSet<>(players.keySet());
+    participants.addAll(observers);
+    return participants;
+  }
+
+
   public synchronized boolean markResigned(String authToken) {
     if (!players.containsKey(authToken)) {
       return false; // Player not part of the game
@@ -104,6 +111,10 @@ public class GameState {
     return observers.remove(authToken);
   }
 
+  public ChessGame getChessGame() {
+    return chessGame;
+  }
+
   public int getGameID() {
     return gameID;
   }
@@ -114,6 +125,10 @@ public class GameState {
 
   public Set<String> getObservers() {
     return observers;
+  }
+
+  public ChessGame.TeamColor getPlayerColor(String authToken) {
+    return playerColors.get(authToken);
   }
 
 
@@ -148,7 +163,6 @@ public class GameState {
       // Check for game-ending conditions
       ChessGame.TeamColor opponentColor = chessGame.getOpponentColor(playerColor);
       if (chessGame.isInCheckmate(opponentColor)) {
-        System.out.println("Checkmate detected! Opponent: " + opponentColor);
         gameOver = true;
         winnerAuthToken = getOpponentAuthToken(authToken);
         return new MoveResult(true, "Move successful. Checkmate!");

@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
 import ui.Main;
 public class WebSocketMessageHandler {
-  private static final Gson GSON= new Gson();
+  private static final Gson gson = new Gson();
 
   /**
    * Handles incoming messages from the WebSocket.
@@ -17,31 +17,31 @@ public class WebSocketMessageHandler {
 
     try {
       // Parse the message
-      ServerMessage serverMessage = GSON.fromJson(message, ServerMessage.class);
+      ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
 
       // Handle the message based on its type
       switch (serverMessage.getServerMessageType()) {
         case LOAD_GAME:
           //System.out.println("Parsed ServerMessageType: LOAD_GAME");
           // Deserialize to GameStateDTO
-          GameStateDTO updatedState = GSON.fromJson(GSON.toJson(serverMessage.getGame()), GameStateDTO.class);
+          GameStateDTO updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameStateDTO.class);
           //System.out.println("Deserialized GameStateDTO: " + gson.toJson(updatedState));
           //System.out.println("Board map in GameStateDTO: " + updatedState.getBoard());
 
           Main.updateGameState(updatedState); // Update the game state in Main
           break;
         case NOTIFICATION:
-        String notification = serverMessage.getMessage();
-        System.out.println("Notification: " + notification);
+          String notification = serverMessage.getMessage();
+          System.out.println("Notification: " + notification);
 
-        if (notification.equalsIgnoreCase("You have resigned.") ||
-                notification.equalsIgnoreCase("Opponent has resigned.") ||
-                notification.equalsIgnoreCase("Checkmate.")) {
-                Main.isInGame = false;
-                Main.currentGameID = -1;
-          Main.shouldTransitionToPostLogin.set(true);
-        }
-        break;
+          if (notification.equalsIgnoreCase("You have resigned.") ||
+                  notification.equalsIgnoreCase("Opponent has resigned.") ||
+                  notification.equalsIgnoreCase("Checkmate.")) {
+            Main.isInGame = false;
+            Main.currentGameID = -1;
+            Main.shouldTransitionToPostLogin.set(true);
+          }
+          break;
         case GAME_OVER:
           String gameOverMessage = serverMessage.getMessage();
           notifyUser("Game Over: " + gameOverMessage);

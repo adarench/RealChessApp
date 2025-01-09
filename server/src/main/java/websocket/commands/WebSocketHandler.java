@@ -276,6 +276,7 @@ public class WebSocketHandler {
   }
 
 
+
   private ServerMessage handleMakeMove(UserGameCommand command) {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
@@ -313,7 +314,7 @@ public class WebSocketHandler {
       if (recipientSession != null && recipientSession.isOpen()) {
         server.sendMessage(recipientSession, gSon.toJson(errorMessage));
       }
-      return null; // We've already sent the error message
+      return null;
     }
 
     // Convert GameState to GameStateDTO
@@ -359,17 +360,19 @@ public class WebSocketHandler {
     }
 
     // If the game is over, send a GAME_OVER message
+    // If the game is over, send a NOTIFICATION message "Checkmate."
     if (gameState.isGameOver()) {
-      ServerMessage gameOverMessage = new ServerMessage(ServerMessageType.GAME_OVER, "Checkmate. ");
       String winnerUsername = gameState.getWinnerUsername();
+      ServerMessage checkmateMessage = new ServerMessage(ServerMessageType.NOTIFICATION, "Checkmate.");
       for (String recipientAuthToken : recipients) {
         Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
         if (recipientSession != null && recipientSession.isOpen()) {
-          server.sendMessage(recipientSession, gSon.toJson(gameOverMessage));
-          System.out.println("Sent GAME_OVER to authToken: " + recipientAuthToken);
+          server.sendMessage(recipientSession, gSon.toJson(checkmateMessage));
+          System.out.println("Sent Checkmate NOTIFICATION to authToken: " + recipientAuthToken);
         }
       }
     }
+
 
     System.out.println("MAKE_MOVE successful for gameID: " + gameID + ", move: " + move);
 
