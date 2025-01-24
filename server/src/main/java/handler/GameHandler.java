@@ -113,6 +113,9 @@ public class GameHandler{
         res.status(403);
       } else if (e.getMessage().contains("Game not found")) {
         res.status(404);
+      }else if (e.getMessage().contains("Invalid color")) {
+        // <-- Add this block
+        res.status(400); // Return "Bad Request" for invalid color
       } else {
         res.status(500);
       }
