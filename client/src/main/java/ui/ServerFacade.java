@@ -1,4 +1,4 @@
-package ui;
+//package ui;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -17,7 +17,7 @@ import websocket.GameState;
 
 import chess.ChessGame;
 
-public class ServerFacade {
+/*public class ServerFacade {
 
   private final String serverUrl;
   public ServerFacade(String serverUrl) {
@@ -377,4 +377,4 @@ public class ServerFacade {
     }
   }
 
-}
+}*/
