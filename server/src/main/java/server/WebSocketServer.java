@@ -1,6 +1,6 @@
-package server;
+//package server;
 
-import org.eclipse.jetty.websocket.api.Session;
+/*import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 @WebSocket
-public class WebSocketServer {
+/*public class WebSocketServer {
 
   private final Gson gson = new Gson();
   private final WebSocketHandler handler;
@@ -101,4 +101,4 @@ public class WebSocketServer {
   }
 
 
-}
+}*/
