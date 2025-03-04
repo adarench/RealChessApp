@@ -1,4 +1,4 @@
-package ui;
+/*package ui;
 import java.util.Scanner;
 import websocket.WebSocketClient;
 import chess.ChessMove;
@@ -600,14 +600,6 @@ public class Main {
         throw new IllegalArgumentException("Unknown piece symbol: " + symbol);
     }
   }
-
-
-  /**
-   * Converts a square string (e.g., "e2") to a ChessPosition object.
-   *
-   * @param square The square string.
-   * @return The corresponding ChessPosition.
-   */
   private static ChessPosition convertSquareToChessPosition(String square) {
     char colChar = square.charAt(0);
     int row = Character.getNumericValue(square.charAt(1));
@@ -869,4 +861,4 @@ public class Main {
   }
 
 
-}
+}*/
