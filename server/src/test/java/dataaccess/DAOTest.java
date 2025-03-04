@@ -28,7 +28,7 @@ public class DAOTest {
     gameDAO = new GameDAO();
     userDAO = new UserDAO();
 
-    // Clear all existing data before each test
+    // Clear all existing dataDA before each test
     authDAO.clearAllAuthTokens();
     gameDAO.clearAllGames();
     userDAO.clearAllUsers();

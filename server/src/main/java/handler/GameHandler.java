@@ -9,6 +9,7 @@ import spark.Response;
 import spark.Route;
 import java.util.Map;
 import java.util.HashMap;
+import chess.ChessGame;
 
 public class GameHandler{
   private GameService gameService;
@@ -97,12 +98,18 @@ public class GameHandler{
       }
 
       JoinGameRequest joinGameRequest = gson.fromJson(req.body(), JoinGameRequest.class);
-      if (joinGameRequest == null || joinGameRequest.gameID <= 0 || joinGameRequest.playerColor == null || joinGameRequest.playerColor.isEmpty()) {
+
+      // Now playerColor is a String
+      if (joinGameRequest == null
+              || joinGameRequest.gameID <= 0
+              || joinGameRequest.playerColor == null) {
         res.status(400);
         return gson.toJson(new ErrorResponse("Bad Request: Missing or invalid fields."));
       }
 
+      // Pass String color to the service
       gameService.joinGame(authToken, joinGameRequest.gameID, joinGameRequest.playerColor);
+
       res.status(200);
       return gson.toJson(new SuccessResponse(true));
 
@@ -113,15 +120,15 @@ public class GameHandler{
         res.status(403);
       } else if (e.getMessage().contains("Game not found")) {
         res.status(404);
-      }else if (e.getMessage().contains("Invalid color")) {
-        // <-- Add this block
-        res.status(400); // Return "Bad Request" for invalid color
+      } else if (e.getMessage().contains("Invalid color")) {
+        res.status(400);
       } else {
         res.status(500);
       }
       return gson.toJson(new ErrorResponse(e.getMessage()));
     }
   };
+
 
   //helper classes
   private static class CreateGameRequest {
@@ -130,7 +137,34 @@ public class GameHandler{
 
   private static class JoinGameRequest {
     int gameID;
-    String playerColor;
+    ChessGame.TeamColor playerColor;
+
+    public JoinGameRequest(ChessGame.TeamColor color, int gameID) {
+      this.gameID = gameID;
+      // If the test passes TeamColor.WHITE or BLACK, store that directly
+      this.playerColor = color; // no mismatch
+    }
+
+    public JoinGameRequest(String color, int gameID) {
+      this.gameID = gameID;
+
+      // Convert the string -> enum or null
+      if (color == null) {
+        this.playerColor = null;
+      } else {
+        try {
+          // "WHITE" -> TeamColor.WHITE, "BLACK" -> TeamColor.BLACK
+          // "GREEN"/"" -> throws IllegalArgumentException => we set to null
+          this.playerColor = ChessGame.TeamColor.valueOf(color.toUpperCase());
+        } catch (IllegalArgumentException e) {
+          this.playerColor = null;
+        }
+      }
+    }
+
+    // No-arg constructor for Gson or reflection
+    public JoinGameRequest() { }
+
   }
 
   private static class ErrorResponse {

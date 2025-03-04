@@ -109,7 +109,7 @@ public class GameDAO {
 
   public List<GameData> listGames() throws DataAccessException {
     List<GameData> games = new ArrayList<>();
-    String sql = "SELECT * FROM Games";
+    String sql = "SELECT * FROM Games ORDER BY gameID";
     try (Connection conn = DatabaseManager.getConnection();
          PreparedStatement stmt = conn.prepareStatement(sql);
          ResultSet rs = stmt.executeQuery()) {

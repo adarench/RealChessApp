@@ -5,6 +5,7 @@ import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.AuthData;
+import chess.ChessGame;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class GameService {
 
 
   // Join a game
-  public void joinGame(String authToken, int gameID, String color) throws DataAccessException {
+  public void joinGame(String authToken, int gameID, ChessGame.TeamColor color) throws DataAccessException {
     AuthData auth = authDAO.getAuth(authToken);
     if (auth == null) {
       throw new DataAccessException("Unauthorized: Invalid auth token.");
@@ -56,22 +57,35 @@ public class GameService {
       throw new DataAccessException("Game not found.");
     }
 
+    // If color is null => "GREEN"/"" from test => we throw
+    if (color == null) {
+      throw new DataAccessException("Invalid color specified.");
+    }
+
+    // Either WHITE or BLACK
     String username = auth.username();
 
-    if (color.equalsIgnoreCase("white")) {
+    if (color == ChessGame.TeamColor.WHITE) {
       if (gameData.whiteUsername() != null && !gameData.whiteUsername().isEmpty()) {
         throw new DataAccessException("Forbidden: White spot already taken.");
       }
       gameDAO.updateGame(gameID, username, gameData.blackUsername());
-    } else if (color.equalsIgnoreCase("black")) {
+
+    } else if (color == ChessGame.TeamColor.BLACK) {
       if (gameData.blackUsername() != null && !gameData.blackUsername().isEmpty()) {
         throw new DataAccessException("Forbidden: Black spot already taken.");
       }
       gameDAO.updateGame(gameID, gameData.whiteUsername(), username);
+
     } else {
+      // Enum has only WHITE,BLACK but let's be safe:
       throw new DataAccessException("Invalid color specified.");
     }
   }
+
+
+
+
 
 
 }
