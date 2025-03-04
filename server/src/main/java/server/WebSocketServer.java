@@ -1,4 +1,4 @@
-package server;
+/*package server;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Manages WebSocket connections, routes incoming messages to the handler, and sends responses to clients.
- */
+
+  Manages WebSocket connections, routes incoming messages to the handler, and sends responses to clients.
+
 @WebSocket
 public class WebSocketServer {
 
@@ -103,4 +103,4 @@ public class WebSocketServer {
   }
 
 
-}
+}*/

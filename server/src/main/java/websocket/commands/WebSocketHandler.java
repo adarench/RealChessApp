@@ -1,4 +1,4 @@
-package websocket.commands;
+/*package websocket.commands;
 
 import org.eclipse.jetty.websocket.api.Session;
 import server.WebSocketServer;
@@ -382,4 +382,4 @@ public class WebSocketHandler {
 
 
 
-}
+}*/
