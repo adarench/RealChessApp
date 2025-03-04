@@ -5,7 +5,7 @@ import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessBoard;
 import chess.ChessPosition;
-import websocket.dto.GameStateDTO;
+//import websocket.dto.GameStateDTO;
 
 import java.util.HashMap;
 import java.util.HashSet;
