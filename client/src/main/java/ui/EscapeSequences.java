@@ -1,8 +1,6 @@
-package ui;
+/*package ui;
 
-/**
- * This class contains constants and functions relating to ANSI Escape Sequences that are useful in the Client display
- */
+
 public class EscapeSequences {
 
     private static final String UNICODE_ESCAPE = "\u001b";
@@ -62,4 +60,4 @@ public class EscapeSequences {
     public static final String EMPTY = " \u2003 ";
 
     public static String moveCursorToLocation(int x, int y) { return UNICODE_ESCAPE + "[" + y + ";" + x + "H"; }
-}
+}*/

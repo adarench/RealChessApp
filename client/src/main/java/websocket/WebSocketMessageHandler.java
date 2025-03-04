@@ -1,6 +1,6 @@
 //package websocket;
 
-import websocket.dto.GameStateDTO;
+//import websocket.dto.GameStateDTO;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
 //import ui.Main;

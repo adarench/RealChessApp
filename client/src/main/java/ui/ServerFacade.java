@@ -12,7 +12,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 
 import model.AuthData;
-import websocket.WebSocketClient;
+//import websocket.WebSocketClient;
 //import websocket.GameState;
 
 import chess.ChessGame;

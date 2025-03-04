@@ -1,4 +1,4 @@
-package websocket;
+//package websocket;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -12,10 +12,8 @@ import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
 import chess.ChessMove;
 
-/**
- * A Singleton WebSocket client using Java's built-in WebSocket API.
- */
-public class WebSocketClient {
+
+/*public class WebSocketClient {
   private static WebSocketClient instance;
   private WebSocket webSocket;
   private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
@@ -24,11 +22,7 @@ public class WebSocketClient {
   // Private constructor to prevent instantiation
   public WebSocketClient() {}
 
-  /**
-   * Retrieves the singleton instance of WebSocketClient.
-   *
-   * @return The singleton WebSocketClient instance.
-   */
+
   public static synchronized WebSocketClient getInstance() {
     if (instance == null) {
       instance = new WebSocketClient();
@@ -36,12 +30,7 @@ public class WebSocketClient {
     return instance;
   }
 
-  /**
-   * Connects to the WebSocket server at the given URI.
-   *
-   * @param serverUri The URI of the WebSocket server (e.g., "ws://localhost:8080/ws").
-   * @throws Exception If the connection fails.
-   */
+
   public void connect(String serverUri) throws Exception {
     if (webSocket != null) {
       //System.out.println("WebSocket is already connected.");
@@ -54,15 +43,11 @@ public class WebSocketClient {
     //System.out.println("Connected to WebSocket server: " + serverUri);
   }
 
-  /**
-   * Sends a message to the WebSocket server.
-   *
-   * @param message The message to send (as a JSON string).
-   */
-  public void sendMessage(String message) {
+
+  *//*public void sendMessage(String message) {
     if (webSocket != null) {
       webSocket.sendText(message, true)
-              .thenRun(() -> System.out.println("Message sent." /*+ message*/))
+              .thenRun(() -> System.out.println("Message sent." ))
               .exceptionally(ex -> {
                 System.err.println("Failed to send message: " + ex.getMessage());
                 return null;
@@ -70,14 +55,10 @@ public class WebSocketClient {
     } else {
       System.err.println("WebSocket is not connected.");
     }
-  }
+  }*/
 
-  /**
-   * Blocks until a message is received from the WebSocket server.
-   *
-   * @return The received message, or null if interrupted.
-   */
-  public String receiveMessage() {
+
+  /*public String receiveMessage() {
     try {
       return messageQueue.take(); // Block until a message is available
     } catch (InterruptedException e) {
@@ -87,17 +68,7 @@ public class WebSocketClient {
     }
   }
 
-  /**
-   * Disconnects from the WebSocket server.
-   */
 
-  /**
-   * Sends a MAKE_MOVE command via WebSocket.
-   *
-   * @param authToken The authentication token of the user.
-   * @param gameID    The ID of the game.
-   * @param move      The chess move to make.
-   */
   public void sendMakeMoveCommand(String authToken, int gameID, ChessMove move) {
     UserGameCommand makeMoveCommand = new UserGameCommand();
     makeMoveCommand.setCommandType(UserGameCommand.CommandType.MAKE_MOVE);
@@ -105,12 +76,9 @@ public class WebSocketClient {
     makeMoveCommand.setGameID(gameID);
     makeMoveCommand.setMove(move);
     sendMessage(gson.toJson(makeMoveCommand));
-  }
+  }*/
 
-  /**
-   * Internal WebSocket listener to handle events and incoming messages.
-   */
-  private class WebSocketListener implements WebSocket.Listener {
+  /*private class WebSocketListener implements WebSocket.Listener {
 
     @Override
     public void onOpen(WebSocket webSocket) {
@@ -147,4 +115,4 @@ public class WebSocketClient {
       error.printStackTrace();
     }
   }
-}
+}*/
