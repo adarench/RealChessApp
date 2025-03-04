@@ -1,17 +1,13 @@
-package websocket;
+//package websocket;
 
 import websocket.dto.GameStateDTO;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
-import ui.Main;
-public class WebSocketMessageHandler {
+//import ui.Main;
+
+/*public class WebSocketMessageHandler {
   private static final Gson GSON= new Gson();
 
-  /**
-   * Handles incoming messages from the WebSocket.
-   *
-   * @param message The JSON message received from the server.
-   */
   public static void handleMessage(String message) {
     //System.out.println("Raw Message Received " + message);
 
@@ -75,4 +71,4 @@ public class WebSocketMessageHandler {
     System.out.println("Notification: " + message);
   }
 
-}
+}*/
