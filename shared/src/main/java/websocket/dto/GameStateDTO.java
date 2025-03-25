@@ -1,11 +1,11 @@
-//package websocket.dto;
+package websocket.dto;
 
-//import websocket.GameState;
+import websocket.GameState;
 
-//import java.util.Map;
+import java.util.Map;
 import java.util.Set;
 
-/*public class GameStateDTO {
+public class GameStateDTO {
   private int gameID;
   private Map<String, String> players; // authToken -> playerName
   private Map<String, String> playerColors; // authToken -> TeamColor as String
@@ -89,4 +89,4 @@ import java.util.Set;
             ", board=" + board +
             '}';
   }
-}*/
+}

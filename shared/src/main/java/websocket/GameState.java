@@ -1,11 +1,11 @@
-//package websocket;
+package websocket;
 
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessBoard;
 import chess.ChessPosition;
-//import websocket.dto.GameStateDTO;
+import websocket.dto.GameStateDTO;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import java.util.Set;
 import chess.InvalidMoveException;
 
 
-/*public class GameState {
+public class GameState {
   private final int gameID;
   private final ChessGame chessGame; // The chess game logic
   private final Map<String, String> players = new HashMap<>(); // authToken -> playerName
@@ -249,4 +249,4 @@ import chess.InvalidMoveException;
     return dto;
   }
 
-}*/
+}

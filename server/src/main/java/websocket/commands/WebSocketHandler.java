@@ -1,8 +1,8 @@
-//package websocket.commands;
+package websocket.commands;
 
-//import org.eclipse.jetty.websocket.api.Session;
-//import server.WebSocketServer;
-/*
+import org.eclipse.jetty.websocket.api.Session;
+import server.WebSocketServer;
+
 import websocket.GameState;
 import websocket.messages.ServerMessage;
 import websocket.messages.ServerMessage.ServerMessageType;
@@ -380,4 +380,4 @@ public class WebSocketHandler {
 
 
 
-}*/
+}

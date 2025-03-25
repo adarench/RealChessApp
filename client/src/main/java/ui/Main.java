@@ -1,15 +1,15 @@
-//package ui;
+package ui;
 import java.util.Scanner;
-//import websocket.WebSocketClient;
+import websocket.WebSocketClient;
 import chess.ChessMove;
-//import websocket.GameState;
+import websocket.GameState;
 import chess.ChessPosition;
 import chess.ChessPiece;
-//import websocket.WebSocketMessageHandler;
+import websocket.WebSocketMessageHandler;
 import websocket.commands.UserGameCommand;
 import com.google.gson.Gson;
 import chess.ChessGame;
-//import websocket.dto.GameStateDTO;
+import websocket.dto.GameStateDTO;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -21,7 +21,7 @@ import java.io.IOException;
 
 
 import java.util.Map;
-/*public class Main {
+public class Main {
 
   //colors
 
@@ -861,4 +861,4 @@ import java.util.Map;
   }
 
 
-}*/
+}

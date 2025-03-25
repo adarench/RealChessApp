@@ -189,7 +189,9 @@ public class ServerFacade {
       return "Error: Game not found with the name: " + gameName;
     }
 
-    String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, playerColor);
+    // Convert playerColor to uppercase to match server's expectations
+    String upperCaseColor = playerColor.toUpperCase();
+    String jsonInputString = String.format("{\"gameID\":%d,\"playerColor\":\"%s\"}", gameID, upperCaseColor);
     String response = sendHttpRequest("/game", "PUT", jsonInputString);
 
     if (response.equals("Error: Server returned HTTP code 403")) {

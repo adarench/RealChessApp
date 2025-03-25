@@ -1,4 +1,4 @@
-//package websocket;
+package websocket;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -13,7 +13,7 @@ import websocket.messages.ServerMessage;
 import chess.ChessMove;
 
 
-/*public class WebSocketClient {
+public class WebSocketClient {
   private static WebSocketClient instance;
   private WebSocket webSocket;
   private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
@@ -44,7 +44,7 @@ import chess.ChessMove;
   }
 
 
-  *//*public void sendMessage(String message) {
+  public void sendMessage(String message) {
     if (webSocket != null) {
       webSocket.sendText(message, true)
               .thenRun(() -> System.out.println("Message sent." ))
@@ -55,10 +55,10 @@ import chess.ChessMove;
     } else {
       System.err.println("WebSocket is not connected.");
     }
-  }*/
+  }
 
 
-  /*public String receiveMessage() {
+  public String receiveMessage() {
     try {
       return messageQueue.take(); // Block until a message is available
     } catch (InterruptedException e) {
@@ -76,9 +76,9 @@ import chess.ChessMove;
     makeMoveCommand.setGameID(gameID);
     makeMoveCommand.setMove(move);
     sendMessage(gson.toJson(makeMoveCommand));
-  }*/
+  }
 
-  /*private class WebSocketListener implements WebSocket.Listener {
+  private class WebSocketListener implements WebSocket.Listener {
 
     @Override
     public void onOpen(WebSocket webSocket) {
@@ -115,4 +115,4 @@ import chess.ChessMove;
       error.printStackTrace();
     }
   }
-}*/
+}

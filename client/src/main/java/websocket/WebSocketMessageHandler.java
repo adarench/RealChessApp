@@ -1,11 +1,11 @@
-//package websocket;
+package websocket;
 
-//import websocket.dto.GameStateDTO;
+import websocket.dto.GameStateDTO;
 import com.google.gson.Gson;
 import websocket.messages.ServerMessage;
-//import ui.Main;
+import ui.Main;
 
-/*public class WebSocketMessageHandler {
+public class WebSocketMessageHandler {
   private static final Gson GSON= new Gson();
 
   public static void handleMessage(String message) {
@@ -71,4 +71,4 @@ import websocket.messages.ServerMessage;
     System.out.println("Notification: " + message);
   }
 
-}*/
+}
