@@ -27,7 +27,7 @@ public class Server {
     port(port);
     staticFiles.location("/web");
 
-    //webSocket("/ws", WebSocketServer.class);
+    webSocket("/ws", WebSocketServer.class);
 
     // Initialize DAOs (data access objects)
     UserDAO userDAO = new UserDAO();

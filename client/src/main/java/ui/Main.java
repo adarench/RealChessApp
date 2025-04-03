@@ -218,6 +218,7 @@ public class Main {
   private static void quit() {
     System.out.println("Goodbye!");
     scanner.close(); // Close the scanner before exiting
+    System.exit(0); // Actually exit the application
   }
 
   private static void listGames() {
@@ -793,7 +794,7 @@ public class Main {
 
         ChessPosition chessPosition = convertSquareToChessPosition(position);
         int row = isWhitePlayer ? 8 - chessPosition.getRow() : chessPosition.getRow() - 1;
-        int col = chessPosition.getColumn() - 1;
+        int col = isWhitePlayer ? chessPosition.getColumn() - 1 : 8 - chessPosition.getColumn();
 
         boardArray[row][col] = piece;
       }
@@ -809,7 +810,7 @@ public class Main {
           String piece = boardArray[row][col];
           String squareKey = isWhitePlayer ?
                   getSquareKey(8 - row, col + 1) :
-                  getSquareKey(row + 1, col + 1); // Adjust based on player color
+                  getSquareKey(row + 1, 8 - col); // Properly flip columns for black's perspective
 
           boolean isLightSquare = (row + col) % 2 == 0;
 
@@ -843,7 +844,7 @@ public class Main {
       // Print column labels
       System.out.print("  "); // Space before column labels
       for (int col = 0; col < 8; col++) {
-        char colLabel = isWhitePlayer ? (char) ('a' + col) : (char) ('h' - col);
+        char colLabel = isWhitePlayer ? (char) ('a' + col) : (char) ('a' + (7 - col));
         System.out.print(" " + colLabel + " ");
       }
       System.out.println(); // Move to the next line after column labels
