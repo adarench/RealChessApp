@@ -54,11 +54,6 @@ public class GameState {
   }
 
 
-  public Set<String> getAllParticipants() {
-    Set<String> participants = new HashSet<>(players.keySet());
-    participants.addAll(observers);
-    return participants;
-  }
 
 
   public synchronized boolean markResigned(String authToken) {
@@ -127,9 +122,6 @@ public class GameState {
     return observers;
   }
 
-  public ChessGame.TeamColor getPlayerColor(String authToken) {
-    return playerColors.get(authToken);
-  }
 
 
   public boolean isGameOver() {

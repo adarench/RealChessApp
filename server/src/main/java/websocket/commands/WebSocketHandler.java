@@ -26,7 +26,7 @@ import model.GameData;
 import chess.ChessMove;
 
 public class WebSocketHandler {
-  private static  Gson GSON= new Gson();
+  private static final Gson gson = new Gson();
   private static final Map<Integer, GameState> GAME_STATES= new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
@@ -141,70 +141,81 @@ public class WebSocketHandler {
     return loadGameMessage;
   }
   private ServerMessage handleLeave(UserGameCommand command) {
-    int gameID = command.getGameID();
-    String authToken = command.getAuthToken();
+    return processUserCommand(command, (gameID, authToken, userName, gameState) -> {
+      // Remove the user from the game
+      boolean removed = gameState.removePlayer(authToken) || gameState.removeObserver(authToken);
 
-    // Validate the authToken using AuthDAO
-    String userName;
-    try {
-      AuthData authData = authDAO.getAuth(authToken);
-      if (authData == null) {
-        return new ServerMessage(ServerMessageType.ERROR, "Invalid auth token");
-      }
-      userName = authData.username();
-    } catch (DataAccessException e) {
-      e.printStackTrace();
-      return new ServerMessage(ServerMessageType.ERROR, "Server error during authentication");
-    }
+      if (removed) {
+        // Synchronize with the database
+        try {
+          GameData gameData = gameDAO.getGame(gameID);
+          if (gameData != null) {
+            String updatedWhite = gameData.whiteUsername();
+            String updatedBlack = gameData.blackUsername();
 
-    // Check if the game exists
-    if (!GAME_STATES.containsKey(gameID)) {
-      return new ServerMessage(ServerMessageType.ERROR, "Game not found");
-    }
+            // Clear the corresponding spot
+            if (userName.equals(gameData.whiteUsername())) {
+              updatedWhite = null;
+            } else if (userName.equals(gameData.blackUsername())) {
+              updatedBlack = null;
+            }
 
-    GameState gameState = GAME_STATES.get(gameID);
-
-    // Remove the user from the game
-    boolean removed = gameState.removePlayer(authToken) || gameState.removeObserver(authToken);
-
-    if (removed) {
-      // Synchronize with the database
-      try {
-        GameData gameData = gameDAO.getGame(gameID);
-        if (gameData != null) {
-          String updatedWhite = gameData.whiteUsername();
-          String updatedBlack = gameData.blackUsername();
-
-          // Clear the corresponding spot
-          if (userName.equals(gameData.whiteUsername())) {
-            updatedWhite = null;
-          } else if (userName.equals(gameData.blackUsername())) {
-            updatedBlack = null;
+            gameDAO.updateGame(gameID, updatedWhite, updatedBlack);
           }
-
-          gameDAO.updateGame(gameID, updatedWhite, updatedBlack);
+        } catch (DataAccessException e) {
+          e.printStackTrace();
+          return new ServerMessage(ServerMessageType.ERROR, "Failed to update game state in database.");
         }
-      } catch (DataAccessException e) {
-        e.printStackTrace();
-        return new ServerMessage(ServerMessageType.ERROR, "Failed to update game state in database.");
+
+        // If no players are left, remove the GameState
+        if (gameState.getPlayers().isEmpty()) {
+          GAME_STATES.remove(gameID);
+        }
+
+        // Notify others in the game
+        String notificationMessage = userName + " has left the game.";
+        server.broadcastNotification(gameID, notificationMessage, authToken);
+
+        return null;
+      } else {
+        return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
       }
-
-      // If no players are left, remove the GameState
-      if (gameState.getPlayers().isEmpty()) {
-        GAME_STATES.remove(gameID);
-      }
-
-      // Notify others in the game
-      String notificationMessage = userName + " has left the game.";
-      server.broadcastNotification(gameID, notificationMessage, authToken);
-
-      return null;
-    } else {
-      return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
-    }
+    });
   }
 
   private ServerMessage handleResign(UserGameCommand command) {
+    return processUserCommand(command, (gameID, authToken, userName, gameState) -> {
+      // Check if the game is already over
+      if (gameState.isGameOver()) {
+        return new ServerMessage(ServerMessageType.ERROR, "The game is already over. You cannot resign.");
+      }
+
+      // Resign the player
+      boolean resigned = gameState.markResigned(authToken);
+
+      if (resigned) {
+        // Mark the game as over if only one player remains
+        if (gameState.getPlayers().size() <= 1) {
+          gameState.setGameOver(true);
+        }
+
+        // Notify others in the game
+        String notificationMessage = userName + " has resigned.";
+        server.broadcastNotification(gameID, notificationMessage, authToken);
+        return new ServerMessage(ServerMessageType.NOTIFICATION, "You have resigned.");
+      } else {
+        return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
+      }
+    });
+  }
+
+  // Helper interface for command processing
+  private interface CommandProcessor {
+    ServerMessage process(int gameID, String authToken, String userName, GameState gameState);
+  }
+
+  // Common method to process user commands with validation
+  private ServerMessage processUserCommand(UserGameCommand command, CommandProcessor processor) {
     int gameID = command.getGameID();
     String authToken = command.getAuthToken();
 
@@ -227,28 +238,9 @@ public class WebSocketHandler {
     }
 
     GameState gameState = GAME_STATES.get(gameID);
-
-    // Check if the game is already over
-    if (gameState.isGameOver()) {
-      return new ServerMessage(ServerMessageType.ERROR, "The game is already over. You cannot resign.");
-    }
-
-    // Resign the player
-    boolean resigned = gameState.markResigned(authToken);
-
-    if (resigned) {
-      // Mark the game as over if only one player remains
-      if (gameState.getPlayers().size() <= 1) {
-        gameState.setGameOver(true);
-      }
-
-      // Notify others in the game
-      String notificationMessage = userName + " has resigned.";
-      server.broadcastNotification(gameID, notificationMessage, authToken);
-      return new ServerMessage(ServerMessageType.NOTIFICATION, "You have resigned.");
-    } else {
-      return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
-    }
+    
+    // Process the command with the provided processor
+    return processor.process(gameID, authToken, userName, gameState);
   }
 
   public void removeUserFromAllGames(String authToken) {
@@ -312,7 +304,7 @@ public class WebSocketHandler {
       ServerMessage errorMessage = new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
       Session recipientSession = server.getSessionByAuthToken(authToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, GSON.toJson(errorMessage));
+        server.sendMessage(recipientSession, gson.toJson(errorMessage));
       }
       return null; // We've already sent the error message
     }
@@ -321,7 +313,7 @@ public class WebSocketHandler {
     GameStateDTO dto = gameState.toDTO();
 
     // Serialize and log the DTO for debugging
-    String serializedDTO = GSON.toJson(dto);
+    String serializedDTO = gson.toJson(dto);
     System.out.println("Serialized GameStateDTO: " + serializedDTO);
 
     // Create a ServerMessage with LOAD_GAME type
@@ -337,7 +329,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : recipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, GSON.toJson(gameStateMessage));
+        server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
         System.out.println("Sent LOAD_GAME to session: " + recipientSession);
       }
     }
@@ -354,7 +346,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : notificationRecipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, GSON.toJson(notificationMessage));
+        server.sendMessage(recipientSession, gson.toJson(notificationMessage));
         System.out.println("Sent NOTIFICATION to authToken: " + recipientAuthToken);
       }
     }
@@ -366,7 +358,7 @@ public class WebSocketHandler {
       for (String recipientAuthToken : recipients) {
         Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
         if (recipientSession != null && recipientSession.isOpen()) {
-          server.sendMessage(recipientSession, GSON.toJson(gameOverMessage));
+          server.sendMessage(recipientSession, gson.toJson(gameOverMessage));
           System.out.println("Sent GAME_OVER to authToken: " + recipientAuthToken);
         }
       }
