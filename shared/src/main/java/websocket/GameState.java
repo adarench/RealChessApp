@@ -73,16 +73,6 @@ public class GameState {
     }
     return null; // No opponent found (e.g., observer scenario)
   }
-
-  public String getWinnerUsername() {
-    if (winnerAuthToken != null) {
-      return players.get(winnerAuthToken);
-    }
-    return null;
-  }
-
-
-
   public void assignPlayerTeamColor(String authToken, ChessGame.TeamColor teamColor) {
     playerColors.put(authToken, teamColor);
   }
