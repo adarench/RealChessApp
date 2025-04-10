@@ -6,18 +6,18 @@ import websocket.messages.ServerMessage;
 import ui.GameplayUI;
 
 public class WebSocketMessageHandler {
-  private static final Gson gson = new Gson();
+  private static final Gson GSON = new Gson();
 
   public static void handleMessage(String message) {
     try {
       // Parse the message
-      ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+      ServerMessage serverMessage = GSON.fromJson(message, ServerMessage.class);
 
       // Handle the message based on its type
       switch (serverMessage.getServerMessageType()) {
         case LOAD_GAME:
           // Deserialize to GameStateDTO
-          GameStateDTO updatedState = gson.fromJson(gson.toJson(serverMessage.getGame()), GameStateDTO.class);
+          GameStateDTO updatedState = GSON.fromJson(GSON.toJson(serverMessage.getGame()), GameStateDTO.class);
           GameplayUI.updateGameState(updatedState); // Update the game state
           break;
         case NOTIFICATION:

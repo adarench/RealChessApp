@@ -72,4 +72,17 @@ public class ChessUtility {
                 throw new IllegalArgumentException("Unknown piece symbol: " + symbol);
         }
     }
+    
+    /**
+     * Converts a chess square notation (e.g., "e4") to a ChessPosition object.
+     * 
+     * @param square The square notation (e.g., "e4")
+     * @return A ChessPosition object representing the position
+     */
+    public static ChessPosition convertSquareToChessPosition(String square) {
+        char colChar = square.charAt(0);
+        int row = Character.getNumericValue(square.charAt(1));
+        int col = colChar - 'a' + 1;
+        return new ChessPosition(row, col);
+    }
 }

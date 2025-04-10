@@ -26,7 +26,7 @@ import model.GameData;
 import chess.ChessMove;
 
 public class WebSocketHandler {
-  private static final Gson gson = new Gson();
+  private static final Gson GSON = new Gson();
   private static final Map<Integer, GameState> GAME_STATES= new ConcurrentHashMap<>(); // gameID -> GameState
   private final Map<String, Session> authTokenToSession = new ConcurrentHashMap<>(); // authToken -> WebSocket session
   private final WebSocketServer server;
@@ -148,20 +148,7 @@ public class WebSocketHandler {
       if (removed) {
         // Synchronize with the database
         try {
-          GameData gameData = gameDAO.getGame(gameID);
-          if (gameData != null) {
-            String updatedWhite = gameData.whiteUsername();
-            String updatedBlack = gameData.blackUsername();
-
-            // Clear the corresponding spot
-            if (userName.equals(gameData.whiteUsername())) {
-              updatedWhite = null;
-            } else if (userName.equals(gameData.blackUsername())) {
-              updatedBlack = null;
-            }
-
-            gameDAO.updateGame(gameID, updatedWhite, updatedBlack);
-          }
+          updateGameDataAfterPlayerRemoval(gameID, userName);
         } catch (DataAccessException e) {
           e.printStackTrace();
           return new ServerMessage(ServerMessageType.ERROR, "Failed to update game state in database.");
@@ -313,7 +300,7 @@ public class WebSocketHandler {
       ServerMessage errorMessage = new ServerMessage(ServerMessageType.ERROR, moveResult.getErrorMessage());
       Session recipientSession = server.getSessionByAuthToken(authToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, gson.toJson(errorMessage));
+        server.sendMessage(recipientSession, GSON.toJson(errorMessage));
       }
       return null; // We've already sent the error message
     }
@@ -322,7 +309,7 @@ public class WebSocketHandler {
     GameStateDTO dto = gameState.toDTO();
 
     // Serialize and log the DTO for debugging
-    String serializedDTO = gson.toJson(dto);
+    String serializedDTO = GSON.toJson(dto);
     System.out.println("Serialized GameStateDTO: " + serializedDTO);
 
     // Create a ServerMessage with LOAD_GAME type
@@ -338,7 +325,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : recipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, gson.toJson(gameStateMessage));
+        server.sendMessage(recipientSession, GSON.toJson(gameStateMessage));
         System.out.println("Sent LOAD_GAME to session: " + recipientSession);
       }
     }
@@ -355,7 +342,7 @@ public class WebSocketHandler {
     for (String recipientAuthToken : notificationRecipients) {
       Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
       if (recipientSession != null && recipientSession.isOpen()) {
-        server.sendMessage(recipientSession, gson.toJson(notificationMessage));
+        server.sendMessage(recipientSession, GSON.toJson(notificationMessage));
         System.out.println("Sent NOTIFICATION to authToken: " + recipientAuthToken);
       }
     }
@@ -372,4 +359,27 @@ public class WebSocketHandler {
 
 
 
+  /**
+   * Updates the game data in the database after a player has been removed
+   * 
+   * @param gameID The ID of the game
+   * @param userName The username of the player who was removed
+   * @throws DataAccessException If there is an error updating the database
+   */
+  private void updateGameDataAfterPlayerRemoval(int gameID, String userName) throws DataAccessException {
+    GameData gameData = gameDAO.getGame(gameID);
+    if (gameData != null) {
+      String updatedWhite = gameData.whiteUsername();
+      String updatedBlack = gameData.blackUsername();
+
+      // Clear the corresponding spot
+      if (userName.equals(gameData.whiteUsername())) {
+        updatedWhite = null;
+      } else if (userName.equals(gameData.blackUsername())) {
+        updatedBlack = null;
+      }
+
+      gameDAO.updateGame(gameID, updatedWhite, updatedBlack);
+    }
+  }
 }

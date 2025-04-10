@@ -188,7 +188,7 @@ public class GameplayUI {
         }
 
         // Convert input to ChessPosition
-        ChessPosition selectedPosition = convertSquareToChessPosition(input);
+        ChessPosition selectedPosition = ChessUtility.convertSquareToChessPosition(input);
         System.out.println("Selected Position: " + selectedPosition.getRow() + ", " + selectedPosition.getColumn());
 
         // Determine the piece's color if observer
@@ -299,7 +299,7 @@ public class GameplayUI {
             String square = entry.getKey(); // e.g., "e2"
             String pieceSymbol = entry.getValue(); // e.g., "♙"
 
-            ChessPosition position = convertSquareToChessPosition(square);
+            ChessPosition position = ChessUtility.convertSquareToChessPosition(square);
             ChessPiece.PieceType pieceType = ChessUtility.getPieceTypeFromSymbol(pieceSymbol);
             ChessGame.TeamColor teamColor = ChessBoardRenderer.isWhitePiece(pieceSymbol) ? 
                 ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
@@ -315,12 +315,7 @@ public class GameplayUI {
         chessGame.setTeamTurn(totalMoves % 2 == 0 ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK);
     }
 
-    private static ChessPosition convertSquareToChessPosition(String square) {
-        char colChar = square.charAt(0);
-        int row = Character.getNumericValue(square.charAt(1));
-        int col = colChar - 'a' + 1;
-        return new ChessPosition(row, col);
-    }
+    // Using the utility method from ChessUtility class
 
     // Getters and setters for various fields
     public static void setIsObserver(boolean value) {

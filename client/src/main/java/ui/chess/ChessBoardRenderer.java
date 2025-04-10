@@ -32,7 +32,7 @@ public class ChessBoardRenderer {
                 String position = entry.getKey(); // e.g., "e2"
                 String piece = entry.getValue();  // e.g., "♙"
 
-                ChessPosition chessPosition = convertSquareToChessPosition(position);
+                ChessPosition chessPosition = ChessUtility.convertSquareToChessPosition(position);
                 int row = isWhitePlayer ? 8 - chessPosition.getRow() : chessPosition.getRow() - 1;
                 int col = isWhitePlayer ? chessPosition.getColumn() - 1 : 8 - chessPosition.getColumn();
 
@@ -91,12 +91,7 @@ public class ChessBoardRenderer {
         }
     }
 
-    private static ChessPosition convertSquareToChessPosition(String square) {
-        char colChar = square.charAt(0);
-        int row = Character.getNumericValue(square.charAt(1));
-        int col = colChar - 'a' + 1;
-        return new ChessPosition(row, col);
-    }
+    // Using ChessUtility.convertSquareToChessPosition instead
 
     private static String getSquareKey(int row, int col) {
         char column = (char) ('a' + col - 1);
