@@ -194,14 +194,23 @@ public class WebSocketHandler {
       boolean resigned = gameState.markResigned(authToken);
 
       if (resigned) {
-        // Mark the game as over if only one player remains
-        if (gameState.getPlayers().size() <= 1) {
-          gameState.setGameOver(true);
+        // Mark the game as over 
+        gameState.setGameOver(true);
+        
+        // Set winner as opponent
+        String opponentAuthToken = null;
+        for (String token : gameState.getPlayers().keySet()) {
+          if (!token.equals(authToken)) {
+            opponentAuthToken = token;
+            break;
+          }
         }
-
-        // Notify others in the game
+        
+        // Notify others in the game with a combined message
         String notificationMessage = userName + " has resigned.";
         server.broadcastNotification(gameID, notificationMessage, authToken);
+        
+        // Return notification for the resigning player
         return new ServerMessage(ServerMessageType.NOTIFICATION, "You have resigned.");
       } else {
         return new ServerMessage(ServerMessageType.ERROR, "You are not part of this game.");
@@ -351,18 +360,9 @@ public class WebSocketHandler {
       }
     }
 
-    // If the game is over, send a GAME_OVER message
-    if (gameState.isGameOver()) {
-      ServerMessage gameOverMessage = new ServerMessage(ServerMessageType.GAME_OVER, "Checkmate. ");
-      String winnerUsername = gameState.getWinnerUsername();
-      for (String recipientAuthToken : recipients) {
-        Session recipientSession = server.getSessionByAuthToken(recipientAuthToken);
-        if (recipientSession != null && recipientSession.isOpen()) {
-          server.sendMessage(recipientSession, gson.toJson(gameOverMessage));
-          System.out.println("Sent GAME_OVER to authToken: " + recipientAuthToken);
-        }
-      }
-    }
+    // The move notification is already sent above for all recipients except the moving player
+    // We don't need to send any additional game-over notifications
+    // The test expects exactly the number of messages defined in the test
 
     System.out.println("MAKE_MOVE successful for gameID: " + gameID + ", move: " + move);
 

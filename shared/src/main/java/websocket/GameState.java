@@ -156,10 +156,12 @@ public class GameState {
       ChessGame.TeamColor opponentColor = chessGame.getOpponentColor(playerColor);
       if (chessGame.isInCheckmate(opponentColor)) {
         gameOver = true;
-        winnerAuthToken = getOpponentAuthToken(authToken);
+        winnerAuthToken = authToken; // Set the winner as the current player who made the checkmate move
         return new MoveResult(true, "Move successful. Checkmate!");
       } else if (chessGame.isInStalemate(opponentColor)) {
         gameOver = true;
+        // No winner in stalemate
+        winnerAuthToken = null;
         return new MoveResult(true, "Move successful. Stalemate!");
       }
 
